@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Alert,
   StatusBar,
+  Animated,
+  Easing,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
@@ -18,25 +20,20 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Crypto from "expo-crypto";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/query-client";
-import { fetch } from "expo/fetch";
 
-const ZOOM_HINTS = [
-  { min: 0, max: 0.1, label: "Move closer" },
-  { min: 0.1, max: 0.4, label: "Good distance" },
-  { min: 0.4, max: 0.7, label: "Optimal range" },
-  { min: 0.7, max: 1.0, label: "Move back" },
+const FINDER_SIZE = 270;
+const CORNER_SIZE = 32;
+const CORNER_WIDTH = 4;
+
+const ZOOM_LEVELS = [
+  { zoom: 0, label: "1×" },
+  { zoom: 0.3, label: "2×" },
+  { zoom: 0.6, label: "3×" },
 ];
-
-function getZoomHint(zoom: number) {
-  for (const h of ZOOM_HINTS) {
-    if (zoom >= h.min && zoom <= h.max) return h.label;
-  }
-  return "";
-}
 
 export default function ScannerScreen() {
   const { user, token } = useAuth();
@@ -44,33 +41,82 @@ export default function ScannerScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [scanSuccess, setScanSuccess] = useState(false);
   const [anonymousMode, setAnonymousMode] = useState(false);
   const [flashOn, setFlashOn] = useState(false);
-  const [zoom, setZoom] = useState(0.3);
-  const [showZoom, setShowZoom] = useState(false);
+  const [zoom, setZoom] = useState(0);
+  const [zoomLabel, setZoomLabel] = useState("1×");
+
   const scanLockRef = useRef(false);
-  const zoomTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const canScanRef = useRef(false);
+  const focusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Animated scan line
+  const scanLineAnim = useRef(new Animated.Value(0)).current;
+  const scanLineLoop = useRef<Animated.CompositeAnimation | null>(null);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
+  function startScanLine() {
+    scanLineAnim.setValue(0);
+    scanLineLoop.current = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scanLineAnim, {
+          toValue: 1,
+          duration: 2000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scanLineAnim, {
+          toValue: 0,
+          duration: 2000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    scanLineLoop.current.start();
+  }
+
+  function stopScanLine() {
+    if (scanLineLoop.current) {
+      scanLineLoop.current.stop();
+    }
+  }
+
+  useEffect(() => {
+    startScanLine();
+    return () => stopScanLine();
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
+      // Full reset when screen comes into focus
       setScanned(false);
+      setProcessing(false);
+      setScanSuccess(false);
       scanLockRef.current = false;
+      canScanRef.current = false;
+      startScanLine();
+
+      // Delay enabling scan to prevent immediate re-trigger
+      focusTimerRef.current = setTimeout(() => {
+        canScanRef.current = true;
+      }, 500);
+
+      return () => {
+        if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
+        canScanRef.current = false;
+        stopScanLine();
+      };
     }, [])
   );
 
-  function handleZoomChange(val: number) {
-    setZoom(val);
-    setShowZoom(true);
-    if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
-    zoomTimeoutRef.current = setTimeout(() => setShowZoom(false), 2000);
-  }
-
   const handleBarCodeScanned = useCallback(
     async ({ data }: { data: string }) => {
-      if (scanLockRef.current || scanned) return;
+      if (!canScanRef.current || scanLockRef.current || scanned) return;
       scanLockRef.current = true;
+      canScanRef.current = false;
       setScanned(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await processScan(data);
@@ -86,16 +132,19 @@ export default function ScannerScreen() {
         "Content-Type": "application/json",
       };
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${baseUrl}api/qr/scan`, {
+
+      const res = await globalThis.fetch(`${baseUrl}api/qr/scan`, {
         method: "POST",
         headers,
         body: JSON.stringify({ content, isAnonymous: anonymousMode }),
       });
       const data = await res.json();
 
+      if (!res.ok) throw new Error(data.message || "Scan failed");
+
       if (!anonymousMode) {
         const scanEntry = {
-          id: Crypto.randomUUID(),
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
           content,
           contentType: data.qrCode?.contentType || "text",
           scannedAt: new Date().toISOString(),
@@ -109,15 +158,22 @@ export default function ScannerScreen() {
       }
 
       if (data.qrCode?.id) {
-        router.push({
-          pathname: "/qr-detail/[id]",
-          params: { id: data.qrCode.id },
-        });
+        setScanSuccess(true);
+        setProcessing(false);
+        // Brief success flash then navigate
+        await new Promise((r) => setTimeout(r, 300));
+        router.push(`/qr-detail/${data.qrCode.id}`);
       }
     } catch (e: any) {
-      Alert.alert("Error", e.message || "Failed to process scan");
-      setScanned(false);
-      scanLockRef.current = false;
+      Alert.alert("Scan Failed", e.message || "Could not process QR code. Please try again.", [
+        { text: "OK", onPress: () => {
+          setScanned(false);
+          setProcessing(false);
+          setScanSuccess(false);
+          scanLockRef.current = false;
+          canScanRef.current = true;
+        }},
+      ]);
     } finally {
       setProcessing(false);
     }
@@ -149,7 +205,7 @@ export default function ScannerScreen() {
       const baseUrl = getApiUrl();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${baseUrl}api/qr/decode-image`, {
+      const res = await globalThis.fetch(`${baseUrl}api/qr/decode-image`, {
         method: "POST",
         headers,
         body: JSON.stringify({ imageBase64: base64 }),
@@ -167,6 +223,14 @@ export default function ScannerScreen() {
     }
   }
 
+  function cycleZoom() {
+    const currentIdx = ZOOM_LEVELS.findIndex((z) => z.zoom === zoom);
+    const next = ZOOM_LEVELS[(currentIdx + 1) % ZOOM_LEVELS.length];
+    setZoom(next.zoom);
+    setZoomLabel(next.label);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }
+
   if (!permission) {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
@@ -178,13 +242,13 @@ export default function ScannerScreen() {
   if (!permission.granted) {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
-        <Animated.View entering={FadeIn.duration(400)} style={styles.permissionBox}>
+        <Reanimated.View entering={FadeIn.duration(400)} style={styles.permissionBox}>
           <View style={styles.permIconCircle}>
             <Ionicons name="camera" size={48} color={Colors.dark.primary} />
           </View>
           <Text style={styles.permTitle}>Camera Access Required</Text>
           <Text style={styles.permSubtitle}>
-            Allow camera access to scan QR codes directly
+            Allow camera access to scan QR codes instantly
           </Text>
           {permission.status === "denied" && !permission.canAskAgain ? (
             <View style={styles.permDeniedBox}>
@@ -213,17 +277,21 @@ export default function ScannerScreen() {
             <Ionicons name="images" size={20} color={Colors.dark.primary} />
             <Text style={styles.galleryAltText}>Pick from Gallery</Text>
           </Pressable>
-        </Animated.View>
+        </Reanimated.View>
       </View>
     );
   }
 
-  const zoomHint = getZoomHint(zoom);
+  const scanLineY = scanLineAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, FINDER_SIZE - 2],
+  });
 
   return (
     <View style={styles.container}>
       {Platform.OS !== "web" && <StatusBar hidden />}
 
+      {/* Full screen camera */}
       <CameraView
         style={StyleSheet.absoluteFillObject}
         facing="back"
@@ -233,65 +301,90 @@ export default function ScannerScreen() {
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
       />
 
-      <View style={StyleSheet.absoluteFillObject}>
+      {/* Dark overlay: top */}
+      <View style={[styles.dimZone, styles.dimTop, { height: topInset + 56 + (FINDER_SIZE / 2 > 180 ? (300 - FINDER_SIZE) / 2 : 60) }]} />
+
+      {/* Middle row: dim | finder | dim */}
+      <View style={styles.middleRow}>
+        <View style={styles.dimSide} />
+
+        {/* Finder frame */}
+        <View style={styles.finderWrapper}>
+          {/* Corner brackets */}
+          <View style={[styles.corner, styles.cornerTL]} />
+          <View style={[styles.corner, styles.cornerTR]} />
+          <View style={[styles.corner, styles.cornerBL]} />
+          <View style={[styles.corner, styles.cornerBR]} />
+
+          {/* Animated scan line */}
+          {!scanned && (
+            <Animated.View
+              style={[
+                styles.scanLine,
+                { transform: [{ translateY: scanLineY }] },
+              ]}
+            />
+          )}
+
+          {/* Success overlay */}
+          {scanSuccess && (
+            <View style={styles.successOverlay}>
+              <View style={styles.successCircle}>
+                <Ionicons name="checkmark" size={40} color="#000" />
+              </View>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.dimSide} />
+      </View>
+
+      {/* Dark overlay: bottom */}
+      <View style={[styles.dimZone, { flex: 1 }]} />
+
+      {/* UI controls on top */}
+      <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
+        {/* Top bar */}
         <View style={[styles.topBar, { paddingTop: topInset + 8 }]}>
           <Pressable onPress={() => router.back()} style={styles.topBarBtn}>
             <Ionicons name="chevron-back" size={24} color="#fff" />
           </Pressable>
-          <Text style={styles.scanTitle}>Scan QR Code</Text>
+          <View style={styles.topCenter}>
+            <Text style={styles.scanTitle}>QR Guard</Text>
+            <Text style={styles.scanSubtitle}>Point at any QR code</Text>
+          </View>
           <Pressable
             onPress={() => {
               setFlashOn(!flashOn);
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }}
-            style={styles.topBarBtn}
+            style={[styles.topBarBtn, flashOn && styles.topBarBtnActive]}
           >
-            <Ionicons name={flashOn ? "flash" : "flash-off"} size={22} color="#fff" />
+            <Ionicons
+              name={flashOn ? "flash" : "flash-off"}
+              size={22}
+              color={flashOn ? Colors.dark.primary : "#fff"}
+            />
           </Pressable>
         </View>
 
-        <View style={styles.middleRow}>
-          <View style={styles.sideDim} />
-          <View style={styles.finderFrame}>
-            <View style={[styles.corner, styles.cornerTL]} />
-            <View style={[styles.corner, styles.cornerTR]} />
-            <View style={[styles.corner, styles.cornerBL]} />
-            <View style={[styles.corner, styles.cornerBR]} />
-          </View>
-          <View style={styles.sideDim} />
+        {/* Center hint */}
+        <View style={styles.centerHint}>
+          <View style={styles.finderSpacer} />
+          <Text style={styles.hintText}>
+            {scanned && !scanSuccess ? "Processing..." : "Align QR code to scan"}
+          </Text>
         </View>
 
-        <View style={styles.belowFinder}>
-          {showZoom && (
-            <Animated.Text entering={FadeIn.duration(200)} style={styles.zoomHint}>
-              {zoomHint}
-            </Animated.Text>
-          )}
-          {!showZoom && (
-            <Text style={styles.finderHint}>Position QR code within the frame</Text>
-          )}
-        </View>
+        {/* Bottom controls */}
+        <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 24) + 16 }]}>
+          {/* Zoom pill */}
+          <Pressable onPress={cycleZoom} style={styles.zoomPill}>
+            <MaterialCommunityIcons name="magnify" size={16} color={Colors.dark.primary} />
+            <Text style={styles.zoomPillText}>{zoomLabel}</Text>
+          </Pressable>
 
-        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 24 }]}>
-          <View style={styles.zoomRow}>
-            <Pressable
-              onPress={() => handleZoomChange(Math.max(0, zoom - 0.1))}
-              style={styles.zoomBtn}
-            >
-              <Ionicons name="remove" size={20} color="#fff" />
-            </Pressable>
-            <View style={styles.zoomTrack}>
-              <View style={[styles.zoomFill, { width: `${zoom * 100}%` as any }]} />
-            </View>
-            <Pressable
-              onPress={() => handleZoomChange(Math.min(0.9, zoom + 0.1))}
-              style={styles.zoomBtn}
-            >
-              <Ionicons name="add" size={20} color="#fff" />
-            </Pressable>
-            <Text style={styles.zoomLabel}>{(1 + zoom * 5).toFixed(1)}x</Text>
-          </View>
-
+          {/* Anonymous toggle */}
           {user ? (
             <Pressable
               onPress={() => {
@@ -302,114 +395,119 @@ export default function ScannerScreen() {
             >
               <Ionicons
                 name={anonymousMode ? "eye-off" : "eye"}
-                size={18}
-                color={anonymousMode ? Colors.dark.warning : "#fff"}
+                size={16}
+                color={anonymousMode ? Colors.dark.warning : "rgba(255,255,255,0.8)"}
               />
               <Text style={[styles.anonText, anonymousMode && { color: Colors.dark.warning }]}>
-                {anonymousMode ? "Anonymous mode" : "Normal mode"}
+                {anonymousMode ? "Anonymous" : "Tracked"}
               </Text>
             </Pressable>
           ) : null}
 
+          {/* Bottom action row */}
           <View style={styles.bottomActions}>
             <Pressable
               onPress={handlePickImage}
-              style={({ pressed }) => [styles.actionBtn, { opacity: pressed ? 0.7 : 1 }]}
+              style={({ pressed }) => [styles.sideActionBtn, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <View style={styles.actionBtnCircle}>
-                <Ionicons name="images" size={24} color="#fff" />
+              <View style={styles.sideActionCircle}>
+                <Ionicons name="images-outline" size={24} color="#fff" />
               </View>
-              <Text style={styles.actionLabel}>Gallery</Text>
+              <Text style={styles.sideActionLabel}>Gallery</Text>
             </Pressable>
 
-            <View style={styles.mainScanArea}>
+            {/* Center scan indicator */}
+            <View style={styles.centerAction}>
               {scanned ? (
                 <Pressable
                   onPress={() => {
                     setScanned(false);
+                    setScanSuccess(false);
+                    setProcessing(false);
                     scanLockRef.current = false;
+                    canScanRef.current = true;
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   }}
-                  style={styles.rescanBtn}
+                  style={styles.rescanRing}
                 >
-                  <Ionicons name="refresh" size={30} color="#000" />
+                  <Ionicons name="refresh" size={28} color={Colors.dark.primary} />
                 </Pressable>
               ) : (
-                <View style={styles.scanReadyDot} />
+                <View style={styles.readyRing}>
+                  <View style={styles.readyDot} />
+                </View>
               )}
             </View>
 
             <Pressable
-              onPress={() => {
-                setShowZoom(!showZoom);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              }}
-              style={styles.actionBtn}
+              onPress={() => router.push("/(auth)/login")}
+              style={({ pressed }) => [styles.sideActionBtn, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <View style={styles.actionBtnCircle}>
-                <Ionicons name="scan-outline" size={24} color="#fff" />
-              </View>
-              <Text style={styles.actionLabel}>Zoom</Text>
+              {user ? (
+                <>
+                  <View style={styles.sideActionCircle}>
+                    <Ionicons name="person" size={22} color={Colors.dark.primary} />
+                  </View>
+                  <Text style={[styles.sideActionLabel, { color: Colors.dark.primary }]}>
+                    {formatFirstName(user.displayName)}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <View style={styles.sideActionCircle}>
+                    <Ionicons name="person-outline" size={22} color="#fff" />
+                  </View>
+                  <Text style={styles.sideActionLabel}>Sign In</Text>
+                </>
+              )}
             </Pressable>
           </View>
         </View>
       </View>
 
+      {/* Processing overlay */}
       {processing ? (
         <View style={styles.processingOverlay}>
-          <View style={styles.processingBox}>
+          <Reanimated.View entering={FadeIn.duration(200)} style={styles.processingBox}>
             <ActivityIndicator color={Colors.dark.primary} size="large" />
-            <Text style={styles.processingText}>Analyzing QR code...</Text>
-          </View>
+            <Text style={styles.processingTitle}>Analyzing QR Code</Text>
+            <Text style={styles.processingSubtitle}>Checking trust score & community reports...</Text>
+          </Reanimated.View>
         </View>
       ) : null}
     </View>
   );
 }
 
-const CORNER_SIZE = 30;
-const CORNER_WIDTH = 4;
-const FINDER_SIZE = 260;
+function formatFirstName(name: string): string {
+  if (!name) return "";
+  const parts = name.trim().split(/\s+/);
+  return parts[0].length > 10 ? parts[0].substring(0, 9) + "…" : parts[0];
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
   },
-  topBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    backgroundColor: "rgba(0,0,0,0.5)",
+  dimZone: {
+    backgroundColor: "rgba(0,0,0,0.62)",
   },
-  scanTitle: {
-    fontSize: 17,
-    fontFamily: "Inter_700Bold",
-    color: "#fff",
-  },
-  topBarBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    alignItems: "center",
-    justifyContent: "center",
+  dimTop: {
+    width: "100%",
   },
   middleRow: {
-    flex: 1,
     flexDirection: "row",
-    alignItems: "center",
-  },
-  sideDim: {
-    flex: 1,
     height: FINDER_SIZE,
-    backgroundColor: "rgba(0,0,0,0.55)",
   },
-  finderFrame: {
+  dimSide: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.62)",
+  },
+  finderWrapper: {
     width: FINDER_SIZE,
     height: FINDER_SIZE,
+    overflow: "hidden",
     position: "relative",
   },
   corner: {
@@ -421,99 +519,155 @@ const styles = StyleSheet.create({
     top: 0, left: 0,
     borderTopWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH,
     borderTopColor: Colors.dark.primary, borderLeftColor: Colors.dark.primary,
-    borderTopLeftRadius: 8,
+    borderTopLeftRadius: 10,
   },
   cornerTR: {
     top: 0, right: 0,
     borderTopWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH,
     borderTopColor: Colors.dark.primary, borderRightColor: Colors.dark.primary,
-    borderTopRightRadius: 8,
+    borderTopRightRadius: 10,
   },
   cornerBL: {
     bottom: 0, left: 0,
     borderBottomWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH,
     borderBottomColor: Colors.dark.primary, borderLeftColor: Colors.dark.primary,
-    borderBottomLeftRadius: 8,
+    borderBottomLeftRadius: 10,
   },
   cornerBR: {
     bottom: 0, right: 0,
     borderBottomWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH,
     borderBottomColor: Colors.dark.primary, borderRightColor: Colors.dark.primary,
-    borderBottomRightRadius: 8,
+    borderBottomRightRadius: 10,
   },
-  belowFinder: {
-    alignItems: "center",
-    paddingVertical: 16,
-    backgroundColor: "rgba(0,0,0,0.55)",
+  scanLine: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: Colors.dark.primary,
+    shadowColor: Colors.dark.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    opacity: 0.9,
   },
-  finderHint: {
-    fontSize: 14,
-    fontFamily: "Inter_500Medium",
-    color: "rgba(255,255,255,0.7)",
-  },
-  zoomHint: {
-    fontSize: 15,
-    fontFamily: "Inter_700Bold",
-    color: Colors.dark.primary,
-  },
-  bottomBar: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    gap: 16,
-    alignItems: "center",
-  },
-  zoomRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    width: "100%",
-  },
-  zoomBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.15)",
+  successOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 212, 255, 0.15)",
     alignItems: "center",
     justifyContent: "center",
   },
-  zoomTrack: {
-    flex: 1,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    overflow: "hidden",
-  },
-  zoomFill: {
-    height: 4,
+  successCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: Colors.dark.primary,
-    borderRadius: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: Colors.dark.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
+    elevation: 12,
   },
-  zoomLabel: {
+  topBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  topBarBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  topBarBtnActive: {
+    backgroundColor: "rgba(0, 212, 255, 0.15)",
+    borderColor: Colors.dark.primary,
+  },
+  topCenter: {
+    alignItems: "center",
+  },
+  scanTitle: {
+    fontSize: 17,
+    fontFamily: "Inter_700Bold",
+    color: "#fff",
+    letterSpacing: 0.5,
+  },
+  scanSubtitle: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.55)",
+    marginTop: 2,
+  },
+  centerHint: {
+    alignItems: "center",
+    paddingTop: 16,
+  },
+  finderSpacer: {
+    height: FINDER_SIZE,
+  },
+  hintText: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: "rgba(255,255,255,0.65)",
+    marginTop: 12,
+    letterSpacing: 0.3,
+  },
+  bottomBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    gap: 16,
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.55)",
+  },
+  zoomPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 212, 255, 0.3)",
+  },
+  zoomPillText: {
     fontSize: 13,
     fontFamily: "Inter_700Bold",
     color: Colors.dark.primary,
-    minWidth: 28,
-    textAlign: "right",
+    minWidth: 22,
+    textAlign: "center",
   },
   anonToggle: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
   },
   anonToggleActive: {
-    backgroundColor: Colors.dark.warningDim,
-    borderWidth: 1,
-    borderColor: "rgba(245, 158, 11, 0.3)",
+    backgroundColor: "rgba(245, 158, 11, 0.12)",
+    borderColor: "rgba(245, 158, 11, 0.4)",
   },
   anonText: {
     fontSize: 13,
     fontFamily: "Inter_600SemiBold",
-    color: "#fff",
+    color: "rgba(255,255,255,0.8)",
   },
   bottomActions: {
     flexDirection: "row",
@@ -522,70 +676,88 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 8,
   },
-  actionBtn: {
+  sideActionBtn: {
     alignItems: "center",
     gap: 6,
-    minWidth: 64,
+    minWidth: 72,
   },
-  actionBtnCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: "rgba(255,255,255,0.15)",
+  sideActionCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(255,255,255,0.1)",
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
   },
-  actionLabel: {
+  sideActionLabel: {
     fontSize: 12,
     fontFamily: "Inter_500Medium",
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(255,255,255,0.65)",
   },
-  mainScanArea: {
+  centerAction: {
     alignItems: "center",
     justifyContent: "center",
     width: 80,
     height: 80,
   },
-  rescanBtn: {
+  readyRing: {
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: Colors.dark.primary,
+    borderWidth: 2.5,
+    borderColor: "rgba(0, 212, 255, 0.4)",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: Colors.dark.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 8,
   },
-  scanReadyDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  readyDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: Colors.dark.primary,
     shadowColor: Colors.dark.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
     shadowRadius: 8,
   },
+  rescanRing: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 2.5,
+    borderColor: Colors.dark.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 212, 255, 0.08)",
+  },
   processingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.75)",
+    backgroundColor: "rgba(0,0,0,0.82)",
     justifyContent: "center",
     alignItems: "center",
   },
   processingBox: {
     backgroundColor: Colors.dark.surface,
-    padding: 32,
-    borderRadius: 20,
+    padding: 36,
+    borderRadius: 24,
     alignItems: "center",
-    gap: 16,
+    gap: 14,
+    borderWidth: 1,
+    borderColor: "rgba(0, 212, 255, 0.15)",
+    maxWidth: 280,
   },
-  processingText: {
-    fontSize: 15,
-    fontFamily: "Inter_500Medium",
+  processingTitle: {
+    fontSize: 17,
+    fontFamily: "Inter_700Bold",
     color: Colors.dark.text,
+  },
+  processingSubtitle: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.dark.textSecondary,
+    textAlign: "center",
+    lineHeight: 18,
   },
   permissionBox: {
     flex: 1,

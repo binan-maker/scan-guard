@@ -21,7 +21,15 @@ import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/query-client";
-import { fetch } from "expo/fetch";
+
+function smartName(name: string): string {
+  if (!name) return "User";
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0];
+  if (name.length <= 18) return name;
+  if (first.length <= 18) return first;
+  return first.substring(0, 16) + "…";
+}
 
 interface QrDetail {
   id: string;
@@ -90,6 +98,7 @@ export default function QrDetailScreen() {
   const [commentsTotal, setCommentsTotal] = useState(0);
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; author: string } | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -101,13 +110,14 @@ export default function QrDetailScreen() {
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
-  const loadQrData = useCallback(async () => {
+  const loadQrData = useCallback(async (attempt = 0) => {
+    setLoadError(false);
     try {
       const baseUrl = getApiUrl();
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const res = await fetch(`${baseUrl}api/qr/${id}`, { headers });
+      const res = await globalThis.fetch(`${baseUrl}api/qr/${id}`, { headers });
       if (res.ok) {
         const data = await res.json();
         setQrCode(data.qrCode);
@@ -119,11 +129,23 @@ export default function QrDetailScreen() {
         setFollowCount(data.followCount || 0);
         setTrustScore(data.trustScore || null);
         if (data.userReport) setUserReport(data.userReport.reportType);
+        setLoading(false);
+      } else if (res.status === 404) {
+        setLoadError(true);
+        setLoading(false);
+      } else if (attempt < 2) {
+        setTimeout(() => loadQrData(attempt + 1), 600);
+      } else {
+        setLoadError(true);
+        setLoading(false);
       }
     } catch (e) {
-      console.error("Load QR error:", e);
-    } finally {
-      setLoading(false);
+      if (attempt < 2) {
+        setTimeout(() => loadQrData(attempt + 1), 600);
+      } else {
+        setLoadError(true);
+        setLoading(false);
+      }
     }
   }, [id, token]);
 
@@ -134,7 +156,7 @@ export default function QrDetailScreen() {
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
       const offset = (page - 1) * COMMENTS_PER_PAGE;
-      const res = await fetch(
+      const res = await globalThis.fetch(
         `${baseUrl}api/qr/${id}/comments?offset=${offset}&limit=${COMMENTS_PER_PAGE}`,
         { headers }
       );
@@ -169,7 +191,7 @@ export default function QrDetailScreen() {
     setReportLoading(type);
     try {
       const baseUrl = getApiUrl();
-      const res = await fetch(`${baseUrl}api/qr/${id}/report`, {
+      const res = await globalThis.fetch(`${baseUrl}api/qr/${id}/report`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ reportType: type }),
@@ -198,7 +220,7 @@ export default function QrDetailScreen() {
     setFavoriteLoading(true);
     try {
       const baseUrl = getApiUrl();
-      const res = await fetch(`${baseUrl}api/qr/${id}/favorite`, {
+      const res = await globalThis.fetch(`${baseUrl}api/qr/${id}/favorite`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -224,7 +246,7 @@ export default function QrDetailScreen() {
     setFollowLoading(true);
     try {
       const baseUrl = getApiUrl();
-      const res = await fetch(`${baseUrl}api/qr/${id}/follow`, {
+      const res = await globalThis.fetch(`${baseUrl}api/qr/${id}/follow`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -250,7 +272,7 @@ export default function QrDetailScreen() {
     setSubmitting(true);
     try {
       const baseUrl = getApiUrl();
-      const res = await fetch(`${baseUrl}api/qr/${id}/comments`, {
+      const res = await globalThis.fetch(`${baseUrl}api/qr/${id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
