@@ -10,6 +10,7 @@ import {
   StatusBar,
   Animated,
   Easing,
+  Linking,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
@@ -245,25 +246,31 @@ export default function ScannerScreen() {
           <Text style={styles.permSubtitle}>
             Allow camera access to scan QR codes instantly
           </Text>
-          {permission.status === "denied" && !permission.canAskAgain ? (
-            <View style={styles.permDeniedBox}>
-              <Ionicons name="information-circle" size={18} color={Colors.dark.warning} />
-              <Text style={styles.permDeniedText}>
-                Camera permission was denied. Enable it in your device settings.
-              </Text>
-            </View>
-          ) : (
+
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              requestPermission();
+            }}
+            style={({ pressed }) => [styles.permButton, { opacity: pressed ? 0.8 : 1 }]}
+          >
+            <Ionicons name="camera" size={20} color="#000" />
+            <Text style={styles.permButtonText}>Enable Camera</Text>
+          </Pressable>
+
+          {!permission.canAskAgain ? (
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                requestPermission();
+                Linking.openSettings();
               }}
-              style={({ pressed }) => [styles.permButton, { opacity: pressed ? 0.8 : 1 }]}
+              style={({ pressed }) => [styles.openSettingsBtn, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <Ionicons name="camera" size={20} color="#000" />
-              <Text style={styles.permButtonText}>Enable Camera</Text>
+              <Ionicons name="settings-outline" size={16} color={Colors.dark.textSecondary} />
+              <Text style={styles.openSettingsText}>Open App Settings</Text>
             </Pressable>
-          )}
+          ) : null}
+
           <Text style={styles.orText}>or</Text>
           <Pressable
             onPress={handlePickImage}
@@ -797,20 +804,20 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     color: "#000",
   },
-  permDeniedBox: {
+  openSettingsBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    backgroundColor: Colors.dark.warningDim,
-    padding: 14,
-    borderRadius: 12,
-    maxWidth: 300,
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.dark.surfaceBorder,
   },
-  permDeniedText: {
+  openSettingsText: {
     fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: Colors.dark.warning,
-    flex: 1,
+    fontFamily: "Inter_500Medium",
+    color: Colors.dark.textSecondary,
   },
   orText: {
     fontSize: 14,

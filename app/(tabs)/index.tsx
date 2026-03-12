@@ -159,6 +159,11 @@ export default function HomeScreen() {
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
+  function getFirstName(name: string): string {
+    if (!name) return "";
+    return name.trim().split(/\s+/)[0];
+  }
+
   return (
     <>
       <View style={[styles.container, { paddingTop: topInset }]}>
@@ -175,9 +180,9 @@ export default function HomeScreen() {
         >
           <Animated.View entering={FadeInDown.duration(600)}>
             <View style={styles.header}>
-              <View>
-                <Text style={styles.greeting}>
-                  {user ? `Hey, ${user.displayName}` : "Welcome"}
+              <View style={styles.headerLeft}>
+                <Text style={styles.greeting} numberOfLines={1} ellipsizeMode="tail">
+                  {user ? `Hey, ${getFirstName(user.displayName)}` : "Welcome"}
                 </Text>
                 <Text style={styles.tagline}>Scan smart. Stay safe.</Text>
               </View>
@@ -481,11 +486,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 24,
+    gap: 8,
+  },
+  headerLeft: {
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
   },
   greeting: {
     fontSize: 26,
     fontFamily: "Inter_700Bold",
     color: Colors.dark.text,
+    flexShrink: 1,
   },
   tagline: {
     fontSize: 14,

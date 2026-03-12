@@ -3,6 +3,7 @@ import { Tabs, router } from "expo-router";
 import { NativeTabs, Icon, Label } from "expo-router/unstable-native-tabs";
 import { BlurView } from "expo-blur";
 import { Platform, StyleSheet, View, Pressable } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import React, { useState, useEffect } from "react";
 import Colors from "@/constants/colors";
@@ -66,7 +67,10 @@ function NativeTabLayout() {
 function ClassicTabLayout() {
   const isWeb = Platform.OS === "web";
   const isIOS = Platform.OS === "ios";
+  const insets = useSafeAreaInsets();
   const notifCount = useNotificationCount();
+
+  const tabBarHeight = isWeb ? 84 : 60 + insets.bottom;
 
   return (
     <Tabs
@@ -80,7 +84,9 @@ function ClassicTabLayout() {
           borderTopWidth: 1,
           borderTopColor: Colors.dark.surfaceBorder,
           elevation: 0,
-          height: isWeb ? 84 : 70,
+          height: tabBarHeight,
+          paddingBottom: insets.bottom,
+          paddingTop: 6,
           overflow: "visible",
         },
         tabBarBackground: () =>
@@ -101,7 +107,7 @@ function ClassicTabLayout() {
         tabBarLabelStyle: {
           fontFamily: "Inter_500Medium",
           fontSize: 11,
-          marginBottom: isWeb ? 8 : 4,
+          marginBottom: 2,
         },
       }}
     >
