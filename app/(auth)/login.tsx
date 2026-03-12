@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
+import GoogleIcon from "@/components/GoogleIcon";
 
 export default function LoginScreen() {
   const { signIn, signInWithGoogle, googleRequest, user } = useAuth();
@@ -24,9 +24,11 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState(false);
 
   useEffect(() => {
     if (user && googleLoading) {
@@ -37,18 +39,38 @@ export default function LoginScreen() {
   }, [user]);
 
   async function handleLogin() {
-    if (!email.trim() || !password.trim()) {
-      setError("Please fill in all fields");
+    const newFieldErrors = { email: "", password: "" };
+    let hasFieldError = false;
+
+    if (!email.trim()) {
+      newFieldErrors.email = "Email address is required.";
+      hasFieldError = true;
+    }
+    if (!password.trim()) {
+      newFieldErrors.password = "Password is required.";
+      hasFieldError = true;
+    }
+
+    if (hasFieldError) {
+      setFieldErrors(newFieldErrors);
+      setError("");
       return;
     }
+
     setError("");
+    setFieldErrors({ email: "", password: "" });
+    setUnverifiedEmail(false);
     setLoading(true);
+
     try {
       await signIn(email.trim(), password);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.dismissAll();
     } catch (e: any) {
-      setError(e.message || "Sign in failed");
+      if (e.code === "auth/email-not-verified") {
+        setUnverifiedEmail(true);
+      }
+      setError(e.message || "Sign in failed. Please try again.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
@@ -57,11 +79,12 @@ export default function LoginScreen() {
 
   async function handleGoogleSignIn() {
     setError("");
+    setUnverifiedEmail(false);
     setGoogleLoading(true);
     try {
       await signInWithGoogle();
     } catch (e: any) {
-      setError(e.message || "Google sign-in failed");
+      setError(e.message || "Google sign-in failed. Please try again.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setGoogleLoading(false);
@@ -90,53 +113,87 @@ export default function LoginScreen() {
         </Text>
 
         {error ? (
-          <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle" size={16} color={Colors.dark.danger} />
-            <Text style={styles.errorText}>{error}</Text>
+          <View style={[
+            styles.errorContainer,
+            unverifiedEmail && styles.warningContainer,
+          ]}>
+            <Ionicons
+              name={unverifiedEmail ? "mail-unread-outline" : "alert-circle"}
+              size={16}
+              color={unverifiedEmail ? Colors.dark.warning : Colors.dark.danger}
+            />
+            <Text style={[
+              styles.errorText,
+              unverifiedEmail && styles.warningText,
+            ]}>
+              {error}
+            </Text>
           </View>
         ) : null}
 
-        <View style={styles.inputContainer}>
-          <Ionicons
-            name="mail-outline"
-            size={20}
-            color={Colors.dark.textMuted}
-            style={styles.inputIcon}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Email address"
-            placeholderTextColor={Colors.dark.textMuted}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+        <View>
+          <View style={[
+            styles.inputContainer,
+            fieldErrors.email ? styles.inputContainerError : null,
+          ]}>
+            <Ionicons
+              name="mail-outline"
+              size={20}
+              color={fieldErrors.email ? Colors.dark.danger : Colors.dark.textMuted}
+              style={styles.inputIcon}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Email address"
+              placeholderTextColor={Colors.dark.textMuted}
+              value={email}
+              onChangeText={(v) => { setEmail(v); if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: "" })); }}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+          {fieldErrors.email ? (
+            <Text style={styles.fieldError}>{fieldErrors.email}</Text>
+          ) : null}
         </View>
 
-        <View style={styles.inputContainer}>
-          <Ionicons
-            name="lock-closed-outline"
-            size={20}
-            color={Colors.dark.textMuted}
-            style={styles.inputIcon}
-          />
-          <TextInput
-            style={[styles.input, { flex: 1 }]}
-            placeholder="Password"
-            placeholderTextColor={Colors.dark.textMuted}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-          />
-          <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+        <View>
+          <View style={[
+            styles.inputContainer,
+            fieldErrors.password ? styles.inputContainerError : null,
+          ]}>
             <Ionicons
-              name={showPassword ? "eye-off-outline" : "eye-outline"}
+              name="lock-closed-outline"
               size={20}
-              color={Colors.dark.textMuted}
+              color={fieldErrors.password ? Colors.dark.danger : Colors.dark.textMuted}
+              style={styles.inputIcon}
             />
-          </Pressable>
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              placeholder="Password"
+              placeholderTextColor={Colors.dark.textMuted}
+              value={password}
+              onChangeText={(v) => { setPassword(v); if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: "" })); }}
+              secureTextEntry={!showPassword}
+            />
+            <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color={Colors.dark.textMuted}
+              />
+            </Pressable>
+          </View>
+          {fieldErrors.password ? (
+            <Text style={styles.fieldError}>{fieldErrors.password}</Text>
+          ) : null}
+
+          <Link href="/(auth)/forgot-password" asChild>
+            <Pressable style={styles.forgotPasswordBtn}>
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </Pressable>
+          </Link>
         </View>
 
         <Pressable
@@ -172,9 +229,7 @@ export default function LoginScreen() {
             <ActivityIndicator color={Colors.dark.text} size="small" />
           ) : (
             <>
-              <View style={styles.googleIconCircle}>
-                <Text style={styles.googleIconText}>G</Text>
-              </View>
+              <GoogleIcon size={20} />
               <Text style={styles.googleButtonText}>Continue with Google</Text>
             </>
           )}
@@ -227,17 +282,23 @@ const styles = StyleSheet.create({
   },
   errorContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 8,
     backgroundColor: Colors.dark.dangerDim,
     padding: 12,
     borderRadius: 12,
+  },
+  warningContainer: {
+    backgroundColor: Colors.dark.warningDim,
   },
   errorText: {
     color: Colors.dark.danger,
     fontFamily: "Inter_500Medium",
     fontSize: 14,
     flex: 1,
+  },
+  warningText: {
+    color: Colors.dark.warning,
   },
   inputContainer: {
     flexDirection: "row",
@@ -247,6 +308,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.dark.surfaceBorder,
     paddingHorizontal: 16,
+  },
+  inputContainerError: {
+    borderColor: Colors.dark.danger,
+    backgroundColor: Colors.dark.dangerDim,
   },
   inputIcon: {
     marginRight: 12,
@@ -261,12 +326,29 @@ const styles = StyleSheet.create({
   eyeBtn: {
     padding: 4,
   },
+  fieldError: {
+    color: Colors.dark.danger,
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  forgotPasswordBtn: {
+    alignSelf: "flex-end",
+    marginTop: 8,
+    paddingVertical: 2,
+  },
+  forgotPasswordText: {
+    color: Colors.dark.primary,
+    fontFamily: "Inter_500Medium",
+    fontSize: 13,
+  },
   primaryButton: {
     backgroundColor: Colors.dark.primary,
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 4,
   },
   primaryButtonText: {
     color: "#000",
@@ -277,7 +359,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: 6,
-    marginTop: 12,
+    marginTop: 4,
   },
   footerText: {
     color: Colors.dark.textSecondary,
@@ -316,24 +398,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 14,
   },
-  googleIconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  googleIconText: {
-    fontSize: 16,
-    fontFamily: "Inter_700Bold",
-    color: "#4285F4",
-  },
   googleButtonText: {
     fontSize: 15,
     fontFamily: "Inter_600SemiBold",
     color: Colors.dark.text,
-    flex: 1,
-    textAlign: "center",
   },
 });

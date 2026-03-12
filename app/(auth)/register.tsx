@@ -10,12 +10,13 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
+import GoogleIcon from "@/components/GoogleIcon";
 
 export default function RegisterScreen() {
   const { signUp, signInWithGoogle, googleRequest, user } = useAuth();
@@ -24,9 +25,12 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   useEffect(() => {
     if (user && googleLoading) {
@@ -37,23 +41,46 @@ export default function RegisterScreen() {
   }, [user]);
 
   async function handleRegister() {
-    if (!displayName.trim() || !email.trim() || !password.trim()) {
-      setError("Please fill in all fields");
+    const newFieldErrors = { name: "", email: "", password: "" };
+    let hasFieldError = false;
+
+    if (!displayName.trim()) {
+      newFieldErrors.name = "Name is required.";
+      hasFieldError = true;
+    }
+    if (!email.trim()) {
+      newFieldErrors.email = "Email address is required.";
+      hasFieldError = true;
+    }
+    if (!password.trim()) {
+      newFieldErrors.password = "Password is required.";
+      hasFieldError = true;
+    } else if (password.length < 6) {
+      newFieldErrors.password = "Password must be at least 6 characters.";
+      hasFieldError = true;
+    }
+
+    if (hasFieldError) {
+      setFieldErrors(newFieldErrors);
+      setError("");
       return;
     }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
+
     setError("");
+    setFieldErrors({ name: "", email: "", password: "" });
     setLoading(true);
+
     try {
       await signUp(email.trim(), displayName.trim(), password);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.dismissAll();
     } catch (e: any) {
-      setError(e.message || "Sign up failed");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      if (e.code === "auth/verification-sent") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setRegisteredEmail(email.trim());
+        setVerificationSent(true);
+      } else {
+        setError(e.message || "Sign up failed. Please try again.");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
     } finally {
       setLoading(false);
     }
@@ -65,11 +92,46 @@ export default function RegisterScreen() {
     try {
       await signInWithGoogle();
     } catch (e: any) {
-      setError(e.message || "Google sign-in failed");
+      setError(e.message || "Google sign-in failed. Please try again.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setGoogleLoading(false);
     }
+  }
+
+  if (verificationSent) {
+    return (
+      <KeyboardAvoidingView
+        style={{ flex: 1, backgroundColor: Colors.dark.background }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView
+          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 24 }]}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.iconContainer}>
+            <View style={[styles.iconCircle, { backgroundColor: "rgba(16,185,129,0.15)" }]}>
+              <Ionicons name="mail-open-outline" size={40} color={Colors.dark.safe} />
+            </View>
+          </View>
+
+          <Text style={styles.title}>Verify Your Email</Text>
+          <Text style={styles.subtitle}>
+            Your account has been created! A verification email has been sent to{"\n"}
+            <Text style={{ color: Colors.dark.primary }}>{registeredEmail}</Text>
+            {"\n\n"}
+            Please click the link in the email to verify your account before signing in. Check your spam folder if you don't see it.
+          </Text>
+
+          <Pressable
+            onPress={() => router.replace("/(auth)/login")}
+            style={({ pressed }) => [styles.primaryButton, { opacity: pressed ? 0.8 : 1 }]}
+          >
+            <Text style={styles.primaryButtonText}>Go to Sign In</Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    );
   }
 
   return (
@@ -112,9 +174,7 @@ export default function RegisterScreen() {
             <ActivityIndicator color={Colors.dark.text} size="small" />
           ) : (
             <>
-              <View style={styles.googleIconCircle}>
-                <Text style={styles.googleIconText}>G</Text>
-              </View>
+              <GoogleIcon size={20} />
               <Text style={styles.googleButtonText}>Continue with Google</Text>
             </>
           )}
@@ -126,64 +186,88 @@ export default function RegisterScreen() {
           <View style={styles.dividerLine} />
         </View>
 
-        <View style={styles.inputContainer}>
-          <Ionicons
-            name="person-outline"
-            size={20}
-            color={Colors.dark.textMuted}
-            style={styles.inputIcon}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Display name"
-            placeholderTextColor={Colors.dark.textMuted}
-            value={displayName}
-            onChangeText={setDisplayName}
-            autoCapitalize="words"
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Ionicons
-            name="mail-outline"
-            size={20}
-            color={Colors.dark.textMuted}
-            style={styles.inputIcon}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Email address"
-            placeholderTextColor={Colors.dark.textMuted}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Ionicons
-            name="lock-closed-outline"
-            size={20}
-            color={Colors.dark.textMuted}
-            style={styles.inputIcon}
-          />
-          <TextInput
-            style={[styles.input, { flex: 1 }]}
-            placeholder="Password (min 6 characters)"
-            placeholderTextColor={Colors.dark.textMuted}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-          />
-          <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+        <View>
+          <View style={[
+            styles.inputContainer,
+            fieldErrors.name ? styles.inputContainerError : null,
+          ]}>
             <Ionicons
-              name={showPassword ? "eye-off-outline" : "eye-outline"}
+              name="person-outline"
               size={20}
-              color={Colors.dark.textMuted}
+              color={fieldErrors.name ? Colors.dark.danger : Colors.dark.textMuted}
+              style={styles.inputIcon}
             />
-          </Pressable>
+            <TextInput
+              style={styles.input}
+              placeholder="Display name"
+              placeholderTextColor={Colors.dark.textMuted}
+              value={displayName}
+              onChangeText={(v) => { setDisplayName(v); if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: "" })); }}
+              autoCapitalize="words"
+            />
+          </View>
+          {fieldErrors.name ? (
+            <Text style={styles.fieldError}>{fieldErrors.name}</Text>
+          ) : null}
+        </View>
+
+        <View>
+          <View style={[
+            styles.inputContainer,
+            fieldErrors.email ? styles.inputContainerError : null,
+          ]}>
+            <Ionicons
+              name="mail-outline"
+              size={20}
+              color={fieldErrors.email ? Colors.dark.danger : Colors.dark.textMuted}
+              style={styles.inputIcon}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Email address"
+              placeholderTextColor={Colors.dark.textMuted}
+              value={email}
+              onChangeText={(v) => { setEmail(v); if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: "" })); }}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+          {fieldErrors.email ? (
+            <Text style={styles.fieldError}>{fieldErrors.email}</Text>
+          ) : null}
+        </View>
+
+        <View>
+          <View style={[
+            styles.inputContainer,
+            fieldErrors.password ? styles.inputContainerError : null,
+          ]}>
+            <Ionicons
+              name="lock-closed-outline"
+              size={20}
+              color={fieldErrors.password ? Colors.dark.danger : Colors.dark.textMuted}
+              style={styles.inputIcon}
+            />
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              placeholder="Password (min 6 characters)"
+              placeholderTextColor={Colors.dark.textMuted}
+              value={password}
+              onChangeText={(v) => { setPassword(v); if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: "" })); }}
+              secureTextEntry={!showPassword}
+            />
+            <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color={Colors.dark.textMuted}
+              />
+            </Pressable>
+          </View>
+          {fieldErrors.password ? (
+            <Text style={styles.fieldError}>{fieldErrors.password}</Text>
+          ) : null}
         </View>
 
         <Pressable
@@ -200,6 +284,15 @@ export default function RegisterScreen() {
             <Text style={styles.primaryButtonText}>Create Account</Text>
           )}
         </Pressable>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Already have an account?</Text>
+          <Link href="/(auth)/login" asChild>
+            <Pressable>
+              <Text style={styles.linkText}>Sign In</Text>
+            </Pressable>
+          </Link>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -236,10 +329,11 @@ const styles = StyleSheet.create({
     color: Colors.dark.textSecondary,
     textAlign: "center",
     marginBottom: 8,
+    lineHeight: 22,
   },
   errorContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 8,
     backgroundColor: Colors.dark.dangerDim,
     padding: 12,
@@ -260,6 +354,10 @@ const styles = StyleSheet.create({
     borderColor: Colors.dark.surfaceBorder,
     paddingHorizontal: 16,
   },
+  inputContainerError: {
+    borderColor: Colors.dark.danger,
+    backgroundColor: Colors.dark.dangerDim,
+  },
   inputIcon: {
     marginRight: 12,
   },
@@ -273,6 +371,13 @@ const styles = StyleSheet.create({
   eyeBtn: {
     padding: 4,
   },
+  fieldError: {
+    color: Colors.dark.danger,
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
   primaryButton: {
     backgroundColor: Colors.dark.primary,
     paddingVertical: 16,
@@ -284,6 +389,22 @@ const styles = StyleSheet.create({
     color: "#000",
     fontSize: 16,
     fontFamily: "Inter_700Bold",
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 4,
+  },
+  footerText: {
+    color: Colors.dark.textSecondary,
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+  },
+  linkText: {
+    color: Colors.dark.primary,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
   },
   dividerRow: {
     flexDirection: "row",
@@ -312,24 +433,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 14,
   },
-  googleIconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  googleIconText: {
-    fontSize: 16,
-    fontFamily: "Inter_700Bold",
-    color: "#4285F4",
-  },
   googleButtonText: {
     fontSize: 15,
     fontFamily: "Inter_600SemiBold",
     color: Colors.dark.text,
-    flex: 1,
-    textAlign: "center",
   },
 });

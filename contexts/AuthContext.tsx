@@ -7,6 +7,8 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithCredential,
+  sendPasswordResetEmail,
+  sendEmailVerification,
   type User as FirebaseUser,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
@@ -21,6 +23,7 @@ interface AuthUser {
   email: string;
   displayName: string;
   photoURL?: string | null;
+  emailVerified: boolean;
 }
 
 interface AuthContextValue {
@@ -31,12 +34,55 @@ interface AuthContextValue {
   signUp: (email: string, displayName: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
+  resendVerification: () => Promise<void>;
   googleRequest: ReturnType<typeof Google.useAuthRequest>[0];
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const GOOGLE_WEB_CLIENT_ID = "971359442211-dppv9u14kun8mo5c0e07pr6f6veh81aa.apps.googleusercontent.com";
+
+export function getAuthErrorMessage(code: string): string {
+  switch (code) {
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+      return "Incorrect email or password. Please try again.";
+    case "auth/invalid-email":
+      return "Please enter a valid email address.";
+    case "auth/email-already-in-use":
+      return "An account with this email already exists. Try signing in instead.";
+    case "auth/weak-password":
+      return "Password must be at least 6 characters.";
+    case "auth/too-many-requests":
+      return "Too many failed attempts. Please wait a moment and try again.";
+    case "auth/network-request-failed":
+      return "Network error. Please check your internet connection and try again.";
+    case "auth/user-disabled":
+      return "This account has been disabled. Please contact support.";
+    case "auth/requires-recent-login":
+      return "For security, please sign out and sign back in before making this change.";
+    case "auth/email-not-verified":
+      return "Please verify your email address before signing in. Check your inbox for a verification link.";
+    case "auth/operation-not-allowed":
+      return "This sign-in method is not enabled. Please contact support.";
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      return "Sign-in was cancelled. Please try again.";
+    case "auth/account-exists-with-different-credential":
+      return "An account already exists with this email using a different sign-in method.";
+    case "ACCOUNT_DELETED":
+      return "This account has been deleted.";
+    default:
+      return "Something went wrong. Please try again.";
+  }
+}
+
+function mapFirebaseError(e: any): Error {
+  const code = e?.code ?? e?.message ?? "";
+  return new Error(getAuthErrorMessage(code));
+}
 
 async function syncUserToFirestore(fbUser: FirebaseUser, displayName?: string) {
   try {
@@ -55,8 +101,6 @@ async function syncUserToFirestore(fbUser: FirebaseUser, displayName?: string) {
       throw new Error("ACCOUNT_DELETED");
     }
   } catch (e: any) {
-    // Only rethrow the deleted-account sentinel; swallow all Firestore
-    // permission / network errors so they never block the auth flow.
     if (e.message === "ACCOUNT_DELETED") throw new Error("This account has been deleted.");
   }
 }
@@ -67,6 +111,7 @@ function toAuthUser(fbUser: FirebaseUser): AuthUser {
     email: fbUser.email ?? "",
     displayName: fbUser.displayName ?? fbUser.email?.split("@")[0] ?? "User",
     photoURL: fbUser.photoURL,
+    emailVerified: fbUser.emailVerified,
   };
 }
 
@@ -81,7 +126,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     scopes: ["profile", "email"],
   });
 
-  // onIdTokenChanged fires on sign-in, sign-out, and token refresh (every hour)
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(firebaseAuth, async (fbUser) => {
       if (fbUser) {
@@ -112,29 +156,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [googleResponse]);
 
   async function signIn(email: string, password: string) {
-    const cred = await signInWithEmailAndPassword(firebaseAuth, email, password);
-    await syncUserToFirestore(cred.user);
-    const idToken = await cred.user.getIdToken();
-    setUser(toAuthUser(cred.user));
-    setToken(idToken);
+    try {
+      const cred = await signInWithEmailAndPassword(firebaseAuth, email, password);
+      if (!cred.user.emailVerified) {
+        await firebaseSignOut(firebaseAuth);
+        const err = new Error(getAuthErrorMessage("auth/email-not-verified")) as any;
+        err.code = "auth/email-not-verified";
+        throw err;
+      }
+      await syncUserToFirestore(cred.user);
+      const idToken = await cred.user.getIdToken();
+      setUser(toAuthUser(cred.user));
+      setToken(idToken);
+    } catch (e: any) {
+      if (e.code === "auth/email-not-verified") throw e;
+      throw mapFirebaseError(e);
+    }
   }
 
   async function signUp(email: string, displayName: string, password: string) {
-    const cred = await createUserWithEmailAndPassword(firebaseAuth, email, password);
-    await updateProfile(cred.user, { displayName });
-    await syncUserToFirestore(cred.user, displayName);
-    const idToken = await cred.user.getIdToken();
-    setUser(toAuthUser(cred.user));
-    setToken(idToken);
+    try {
+      const cred = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+      await updateProfile(cred.user, { displayName });
+      await sendEmailVerification(cred.user);
+      await syncUserToFirestore(cred.user, displayName);
+      await firebaseSignOut(firebaseAuth);
+      const err = new Error("VERIFICATION_SENT") as any;
+      err.code = "auth/verification-sent";
+      throw err;
+    } catch (e: any) {
+      if (e.code === "auth/verification-sent") throw e;
+      throw mapFirebaseError(e);
+    }
   }
 
   async function handleGoogleAccessToken(accessToken: string) {
-    const credential = GoogleAuthProvider.credential(null, accessToken);
-    const cred = await signInWithCredential(firebaseAuth, credential);
-    await syncUserToFirestore(cred.user);
-    const idToken = await cred.user.getIdToken();
-    setUser(toAuthUser(cred.user));
-    setToken(idToken);
+    try {
+      const credential = GoogleAuthProvider.credential(null, accessToken);
+      const cred = await signInWithCredential(firebaseAuth, credential);
+      await syncUserToFirestore(cred.user);
+      const idToken = await cred.user.getIdToken();
+      setUser(toAuthUser(cred.user));
+      setToken(idToken);
+    } catch (e: any) {
+      throw mapFirebaseError(e);
+    }
   }
 
   async function signInWithGoogle() {
@@ -147,8 +213,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
   }
 
+  async function sendPasswordReset(email: string) {
+    try {
+      await sendPasswordResetEmail(firebaseAuth, email);
+    } catch (e: any) {
+      throw mapFirebaseError(e);
+    }
+  }
+
+  async function resendVerification() {
+    try {
+      const currentUser = firebaseAuth.currentUser;
+      if (currentUser) {
+        await sendEmailVerification(currentUser);
+      }
+    } catch (e: any) {
+      throw mapFirebaseError(e);
+    }
+  }
+
   const value = useMemo(
-    () => ({ user, token, isLoading, signIn, signUp, signOut, signInWithGoogle, googleRequest }),
+    () => ({
+      user,
+      token,
+      isLoading,
+      signIn,
+      signUp,
+      signOut,
+      signInWithGoogle,
+      sendPasswordReset,
+      resendVerification,
+      googleRequest,
+    }),
     [user, token, isLoading, googleRequest]
   );
 
