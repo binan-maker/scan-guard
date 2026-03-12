@@ -36,6 +36,43 @@ export async function createUser(
   return user;
 }
 
+export async function createOrGetGoogleUser(
+  googleId: string,
+  email: string,
+  displayName: string,
+  photoURL: string | null
+): Promise<User> {
+  const [existing] = await db
+    .select()
+    .from(users)
+    .where(eq(users.googleId, googleId));
+  if (existing) {
+    const [updated] = await db
+      .update(users)
+      .set({ displayName, photoURL })
+      .where(eq(users.id, existing.id))
+      .returning();
+    return updated;
+  }
+  const [byEmail] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email));
+  if (byEmail) {
+    const [updated] = await db
+      .update(users)
+      .set({ googleId, photoURL, displayName })
+      .where(eq(users.id, byEmail.id))
+      .returning();
+    return updated;
+  }
+  const [user] = await db
+    .insert(users)
+    .values({ email, displayName, googleId, photoURL, passwordHash: null })
+    .returning();
+  return user;
+}
+
 export async function getUserByEmail(email: string): Promise<User | undefined> {
   const [user] = await db.select().from(users).where(eq(users.email, email));
   return user;
@@ -50,6 +87,7 @@ export async function verifyPassword(
   user: User,
   password: string
 ): Promise<boolean> {
+  if (!user.passwordHash) return false;
   return bcrypt.compare(password, user.passwordHash);
 }
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -19,13 +19,22 @@ import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginScreen() {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle, googleRequest, user } = useAuth();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (user && googleLoading) {
+      setGoogleLoading(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.dismissAll();
+    }
+  }, [user]);
 
   async function handleLogin() {
     if (!email.trim() || !password.trim()) {
@@ -43,6 +52,19 @@ export default function LoginScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    setError("");
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (e: any) {
+      setError(e.message || "Google sign-in failed");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setGoogleLoading(false);
     }
   }
 
@@ -139,13 +161,23 @@ export default function LoginScreen() {
         </View>
 
         <Pressable
-          onPress={() => Alert.alert("Coming Soon", "Google Sign-In will be available in the next update.")}
-          style={({ pressed }) => [styles.googleButton, { opacity: pressed ? 0.8 : 1 }]}
+          onPress={handleGoogleSignIn}
+          disabled={googleLoading || !googleRequest}
+          style={({ pressed }) => [
+            styles.googleButton,
+            { opacity: pressed || googleLoading || !googleRequest ? 0.7 : 1 },
+          ]}
         >
-          <View style={styles.googleIconCircle}>
-            <Text style={styles.googleIconText}>G</Text>
-          </View>
-          <Text style={styles.googleButtonText}>Continue with Google</Text>
+          {googleLoading ? (
+            <ActivityIndicator color={Colors.dark.text} size="small" />
+          ) : (
+            <>
+              <View style={styles.googleIconCircle}>
+                <Text style={styles.googleIconText}>G</Text>
+              </View>
+              <Text style={styles.googleButtonText}>Continue with Google</Text>
+            </>
+          )}
         </Pressable>
 
         <View style={styles.footer}>
@@ -275,6 +307,7 @@ const styles = StyleSheet.create({
   googleButton: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 12,
     backgroundColor: Colors.dark.surface,
     borderWidth: 1,

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -18,14 +18,23 @@ import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function RegisterScreen() {
-  const { signUp } = useAuth();
+  const { signUp, signInWithGoogle, googleRequest, user } = useAuth();
   const insets = useSafeAreaInsets();
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (user && googleLoading) {
+      setGoogleLoading(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.dismissAll();
+    }
+  }, [user]);
 
   async function handleRegister() {
     if (!displayName.trim() || !email.trim() || !password.trim()) {
@@ -47,6 +56,19 @@ export default function RegisterScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    setError("");
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (e: any) {
+      setError(e.message || "Google sign-in failed");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setGoogleLoading(false);
     }
   }
 
@@ -77,6 +99,32 @@ export default function RegisterScreen() {
             <Text style={styles.errorText}>{error}</Text>
           </View>
         ) : null}
+
+        <Pressable
+          onPress={handleGoogleSignIn}
+          disabled={googleLoading || !googleRequest}
+          style={({ pressed }) => [
+            styles.googleButton,
+            { opacity: pressed || googleLoading || !googleRequest ? 0.7 : 1 },
+          ]}
+        >
+          {googleLoading ? (
+            <ActivityIndicator color={Colors.dark.text} size="small" />
+          ) : (
+            <>
+              <View style={styles.googleIconCircle}>
+                <Text style={styles.googleIconText}>G</Text>
+              </View>
+              <Text style={styles.googleButtonText}>Continue with Google</Text>
+            </>
+          )}
+        </Pressable>
+
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or create with email</Text>
+          <View style={styles.dividerLine} />
+        </View>
 
         <View style={styles.inputContainer}>
           <Ionicons
@@ -236,5 +284,52 @@ const styles = StyleSheet.create({
     color: "#000",
     fontSize: 16,
     fontFamily: "Inter_700Bold",
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.dark.surfaceBorder,
+  },
+  dividerText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.dark.textMuted,
+  },
+  googleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    backgroundColor: Colors.dark.surface,
+    borderWidth: 1,
+    borderColor: Colors.dark.surfaceBorder,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+  },
+  googleIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  googleIconText: {
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    color: "#4285F4",
+  },
+  googleButtonText: {
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.dark.text,
+    flex: 1,
+    textAlign: "center",
   },
 });

@@ -38,6 +38,7 @@ import {
   getUserComments,
   clearUserComments,
   getReportedComments,
+  createOrGetGoogleUser,
 } from "./storage";
 import { registerSchema, loginSchema } from "@shared/schema";
 
@@ -192,6 +193,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await deleteAuthToken(authHeader.slice(7));
     }
     res.json({ success: true });
+  });
+
+  app.post("/api/auth/google-signin", async (req: AuthRequest, res: Response) => {
+    try {
+      const { accessToken } = req.body;
+      if (!accessToken) {
+        return res.status(400).json({ message: "Access token required" });
+      }
+      const googleRes = await fetch(
+        `https://www.googleapis.com/oauth2/v3/userinfo`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (!googleRes.ok) {
+        return res.status(401).json({ message: "Invalid Google access token" });
+      }
+      const profile = await googleRes.json() as {
+        sub: string;
+        email: string;
+        name: string;
+        picture: string;
+      };
+      if (!profile.sub || !profile.email) {
+        return res.status(401).json({ message: "Could not retrieve Google profile" });
+      }
+      const user = await createOrGetGoogleUser(
+        profile.sub,
+        profile.email,
+        profile.name || profile.email.split("@")[0],
+        profile.picture || null
+      );
+      const token = await createAuthToken(user.id);
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+        },
+        token,
+      });
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
   });
 
   app.post("/api/qr/scan", async (req: AuthRequest, res: Response) => {
