@@ -24,6 +24,7 @@ import Reanimated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/query-client";
+import { getOrCreateQrCode, recordScan } from "@/lib/firestore-service";
 
 const FINDER_SIZE = 270;
 const CORNER_SIZE = 32;
@@ -127,28 +128,16 @@ export default function ScannerScreen() {
   async function processScan(content: string) {
     setProcessing(true);
     try {
-      const baseUrl = getApiUrl();
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await globalThis.fetch(`${baseUrl}api/qr/scan`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ content, isAnonymous: anonymousMode }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Scan failed");
+      const qr = await getOrCreateQrCode(content);
+      await recordScan(qr.id, content, qr.contentType, user?.id || null, anonymousMode);
 
       if (!anonymousMode) {
         const scanEntry = {
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
           content,
-          contentType: data.qrCode?.contentType || "text",
+          contentType: qr.contentType,
           scannedAt: new Date().toISOString(),
-          qrCodeId: data.qrCode?.id,
+          qrCodeId: qr.id,
         };
         const stored = await AsyncStorage.getItem("local_scan_history");
         const history = stored ? JSON.parse(stored) : [];
@@ -157,13 +146,10 @@ export default function ScannerScreen() {
         await AsyncStorage.setItem("local_scan_history", JSON.stringify(history));
       }
 
-      if (data.qrCode?.id) {
-        setScanSuccess(true);
-        setProcessing(false);
-        // Brief success flash then navigate
-        await new Promise((r) => setTimeout(r, 300));
-        router.push(`/qr-detail/${data.qrCode.id}`);
-      }
+      setScanSuccess(true);
+      setProcessing(false);
+      await new Promise((r) => setTimeout(r, 300));
+      router.push(`/qr-detail/${qr.id}`);
     } catch (e: any) {
       Alert.alert("Scan Failed", e.message || "Could not process QR code. Please try again.", [
         { text: "OK", onPress: () => {

@@ -20,7 +20,17 @@ import * as Haptics from "expo-haptics";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
-import { getApiUrl } from "@/lib/query-client";
+import {
+  loadQrDetail,
+  getComments,
+  reportQrCode,
+  toggleFavorite,
+  toggleFollow,
+  addComment,
+  toggleCommentLike,
+  reportComment,
+} from "@/lib/firestore-service";
+import { DocumentSnapshot } from "firebase/firestore";
 
 function smartName(name: string): string {
   if (!name) return "User";
@@ -94,8 +104,8 @@ export default function QrDetailScreen() {
   const [followCount, setFollowCount] = useState(0);
   const [trustScore, setTrustScore] = useState<any>(null);
   const [commentsList, setCommentsList] = useState<CommentItem[]>([]);
-  const [commentsPage, setCommentsPage] = useState(1);
-  const [commentsTotal, setCommentsTotal] = useState(0);
+  const lastCommentRef = useRef<DocumentSnapshot | undefined>(undefined);
+  const [hasMoreComments, setHasMoreComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; author: string } | null>(null);
   const [loadError, setLoadError] = useState(false);
@@ -110,74 +120,57 @@ export default function QrDetailScreen() {
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
-  const loadQrData = useCallback(async (attempt = 0) => {
+  const loadQrData = useCallback(async () => {
     setLoadError(false);
     try {
-      const baseUrl = getApiUrl();
-      const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await globalThis.fetch(`${baseUrl}api/qr/${id}`, { headers });
-      if (res.ok) {
-        const data = await res.json();
-        setQrCode(data.qrCode);
-        setReportCounts(data.reportCounts || {});
-        setTotalScans(data.totalScans || 0);
-        setTotalComments(data.totalComments || 0);
-        setIsFavorite(data.isFavorite || false);
-        setIsFollowing(data.isFollowing || false);
-        setFollowCount(data.followCount || 0);
-        setTrustScore(data.trustScore || null);
-        if (data.userReport) setUserReport(data.userReport.reportType);
-        setLoading(false);
-      } else if (res.status === 404) {
+      const detail = await loadQrDetail(id, user?.id || null);
+      if (!detail) {
         setLoadError(true);
         setLoading(false);
-      } else if (attempt < 2) {
-        setTimeout(() => loadQrData(attempt + 1), 600);
-      } else {
-        setLoadError(true);
-        setLoading(false);
+        return;
       }
+      setQrCode(detail.qrCode);
+      setReportCounts(detail.reportCounts || {});
+      setTotalScans(detail.totalScans || 0);
+      setTotalComments(detail.totalComments || 0);
+      setIsFavorite(detail.isFavorite || false);
+      setIsFollowing(detail.isFollowing || false);
+      setFollowCount(detail.followCount || 0);
+      setTrustScore(detail.trustScore || null);
+      if (detail.userReport) setUserReport(detail.userReport);
+      setLoading(false);
     } catch (e) {
-      if (attempt < 2) {
-        setTimeout(() => loadQrData(attempt + 1), 600);
-      } else {
-        setLoadError(true);
-        setLoading(false);
-      }
+      setLoadError(true);
+      setLoading(false);
     }
-  }, [id, token]);
+  }, [id, user?.id]);
 
-  const loadComments = useCallback(async (page = 1, append = false) => {
+  const loadComments = useCallback(async (append = false) => {
     setCommentsLoading(true);
     try {
-      const baseUrl = getApiUrl();
-      const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      const offset = (page - 1) * COMMENTS_PER_PAGE;
-      const res = await globalThis.fetch(
-        `${baseUrl}api/qr/${id}/comments?offset=${offset}&limit=${COMMENTS_PER_PAGE}`,
-        { headers }
+      const pageLimit = user ? COMMENTS_PER_PAGE : 6;
+      const result = await getComments(
+        id,
+        pageLimit,
+        append ? lastCommentRef.current : undefined
       );
-      if (res.ok) {
-        const data = await res.json();
-        const newComments = data.comments || [];
-        setCommentsTotal(data.total || newComments.length);
-        if (append) {
-          setCommentsList((prev) => [...prev, ...newComments]);
-        } else {
-          setCommentsList(newComments);
-        }
-        setCommentsPage(page);
+      if (append) {
+        setCommentsList((prev) => [...prev, ...result.comments]);
+      } else {
+        setCommentsList(result.comments);
+        lastCommentRef.current = undefined;
       }
+      if (result.lastDoc) {
+        lastCommentRef.current = result.lastDoc;
+      }
+      setHasMoreComments(result.hasMore);
     } catch (e) {}
     setCommentsLoading(false);
-  }, [id, token]);
+  }, [id, user]);
 
   useEffect(() => {
     loadQrData();
-    loadComments(1, false);
+    loadComments(false);
   }, [loadQrData, loadComments]);
 
   async function handleReport(type: string) {
@@ -190,18 +183,10 @@ export default function QrDetailScreen() {
     }
     setReportLoading(type);
     try {
-      const baseUrl = getApiUrl();
-      const res = await globalThis.fetch(`${baseUrl}api/qr/${id}/report`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ reportType: type }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setReportCounts(data.reportCounts);
-        setUserReport(type);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      const counts = await reportQrCode(id, user.id, type);
+      setReportCounts(counts);
+      setUserReport(type);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e: any) {
       Alert.alert("Error", e.message);
     } finally {
@@ -217,20 +202,14 @@ export default function QrDetailScreen() {
       ]);
       return;
     }
+    if (!qrCode) return;
     setFavoriteLoading(true);
     try {
-      const baseUrl = getApiUrl();
-      const res = await globalThis.fetch(`${baseUrl}api/qr/${id}/favorite`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setIsFavorite(data.isFavorite);
-        Haptics.impactAsync(
-          data.isFavorite ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light
-        );
-      }
+      const newFav = await toggleFavorite(id, user.id, qrCode.content, qrCode.contentType);
+      setIsFavorite(newFav);
+      Haptics.impactAsync(
+        newFav ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light
+      );
     } catch (e) {}
     setFavoriteLoading(false);
   }
@@ -243,19 +222,13 @@ export default function QrDetailScreen() {
       ]);
       return;
     }
+    if (!qrCode) return;
     setFollowLoading(true);
     try {
-      const baseUrl = getApiUrl();
-      const res = await globalThis.fetch(`${baseUrl}api/qr/${id}/follow`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setIsFollowing(data.isFollowing);
-        setFollowCount(data.followCount);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
+      const result = await toggleFollow(id, user.id, qrCode.content, qrCode.contentType);
+      setIsFollowing(result.isFollowing);
+      setFollowCount(result.followCount);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (e) {}
     setFollowLoading(false);
   }
@@ -271,22 +244,12 @@ export default function QrDetailScreen() {
     if (!newComment.trim()) return;
     setSubmitting(true);
     try {
-      const baseUrl = getApiUrl();
-      const res = await globalThis.fetch(`${baseUrl}api/qr/${id}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          text: newComment.trim(),
-          parentId: replyTo?.id || null,
-        }),
-      });
-      if (res.ok) {
-        setNewComment("");
-        setReplyTo(null);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        await loadComments(1, false);
-        setTotalComments((p) => p + 1);
-      }
+      await addComment(id, user.id, user.displayName, newComment.trim(), replyTo?.id || null);
+      setNewComment("");
+      setReplyTo(null);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await loadComments(false);
+      setTotalComments((p) => p + 1);
     } catch (e: any) {
       Alert.alert("Error", e.message);
     } finally {
@@ -303,34 +266,22 @@ export default function QrDetailScreen() {
       return;
     }
     try {
-      const baseUrl = getApiUrl();
-      const res = await fetch(`${baseUrl}api/comments/${commentId}/like`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ isLike: action === "like" }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setCommentsList((prev) =>
-          prev.map((c) => {
-            if (c.id !== commentId) return c;
-            const prevUserLike = c.userLike;
-            let newUserLike: "like" | "dislike" | null;
-            if (prevUserLike === action) {
-              newUserLike = null;
-            } else {
-              newUserLike = action;
-            }
-            return {
-              ...c,
-              likeCount: data.likes ?? c.likeCount,
-              dislikeCount: data.dislikes ?? c.dislikeCount,
-              userLike: newUserLike,
-            };
-          })
-        );
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
+      const data = await toggleCommentLike(id, commentId, user.id, action === "like");
+      setCommentsList((prev) =>
+        prev.map((c) => {
+          if (c.id !== commentId) return c;
+          const prevUserLike = c.userLike;
+          const newUserLike: "like" | "dislike" | null =
+            prevUserLike === action ? null : action;
+          return {
+            ...c,
+            likeCount: data.likes,
+            dislikeCount: data.dislikes,
+            userLike: newUserLike,
+          };
+        })
+      );
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (e) {}
   }
 
@@ -338,12 +289,7 @@ export default function QrDetailScreen() {
     setCommentReportModal(null);
     if (!user) return;
     try {
-      const baseUrl = getApiUrl();
-      await fetch(`${baseUrl}api/comments/${commentId}/report`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ reason }),
-      });
+      await reportComment(id, commentId, user.id, reason);
       Alert.alert("Reported", "This comment has been reported for review.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e) {}
@@ -385,7 +331,6 @@ export default function QrDetailScreen() {
 
   const trust = getTrustInfo();
   const paymentApp = qrCode ? detectPaymentApp(qrCode.content) : null;
-  const hasMoreComments = commentsList.length < commentsTotal;
 
   if (loading) {
     return (
@@ -778,7 +723,7 @@ export default function QrDetailScreen() {
 
               {hasMoreComments ? (
                 <Pressable
-                  onPress={() => loadComments(commentsPage + 1, true)}
+                  onPress={() => loadComments(true)}
                   disabled={commentsLoading}
                   style={({ pressed }) => [
                     styles.loadMoreBtn,

@@ -1,0 +1,536 @@
+
+> expo-app@1.0.0 expo:dev
+> EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN EXPO_PUBLIC_DOMAIN=$REPLIT_DEV_DOMAIN:5000 ./node_modules/.bin/expo start --localhost
+
+[1G[0K[90mStarting project at /home/runner/workspace[39m
+[90mReact Compiler enabled[39m
+[2mStarting Metro Bundler[22m
+[33mThe following packages should be updated for best compatibility with the installed [1mexpo[22m version:[39m
+[33m  [1mexpo-auth-session[22m[36m@[39m[33m[31m55.0.8[39m[33m - expected version: [32m~7.0.10[39m[33m[39m
+[33m  [1mreact-native-keyboard-controller[22m[36m@[39m[33m[31m1.20.7[39m[33m - expected version: [32m1.18.5[39m[33m[39m
+[33mYour project may not work correctly until you install the expected versions of the packages.[39m
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+█ ▄▄▄▄▄ █▀▄▄▀▄▀█ ▀▀█▄ ▀█ ▄█ ▄▄▄▄▄ █
+█ █   █ █▄  ▀▀█ ▄█▄▄█▄█  ▀█ █   █ █
+█ █▄▄▄█ █ ▀█▄▀ ▀ ▀██▀ ▀▀▄▄█ █▄▄▄█ █
+█▄▄▄▄▄▄▄█ ▀▄▀ █▄█ ▀▄█ ▀ █▄█▄▄▄▄▄▄▄█
+█▄ █ █▀▄▄▀█ ▄ ▄▄█▀█▄█▄▄▄▄ ▀ ▄▄█  ▀█
+██ █ ▄▀▄▄ ▄▄█ ▀█▀ █▀▄▄▀ █▀▄ ▄▀▄█ ▄█
+█▀█▄▀█▄▄▀█▀▀█ ▄██▀ ▀▀  ▄▄▄▀ ▀▀█▀▀▀█
+█▀▀█▄▀▄▄▀ █▄▄  ▀▀▀ ██▀▀▀  ███▄▀█▀██
+█ █ ▄▄█▄  ▀▄ ▄█▀█ ▄▀▄▄▄▀▀ ▄▄█▄ █▄▄█
+██ ▄▀█▄▄ ▄▀ ▀ ▄ █   █▄▀ █▀▀ ▀  ▄▄▄█
+███▀█ ▀▄▄▀ █▄▀▄█▄▀▀▀█▄  ▄██▀ █▀▀█ █
+█▄ ▀▀█▄▄  █▀██▀▀▀▀██▄▀▀ █ ▄  ▄ ▄█ █
+█▄█▄▄█▄▄▄▀▀▄▄ ▄▀██  ▀█ ▄▀ ▄▄▄ ██▄ █
+█ ▄▄▄▄▄ █▄▄▀   █▀ ▀ ▀ ▀██ █▄█  ▄▄▀█
+█ █   █ █▀▄▀  ▀▀█▄▄█▄▀ ▀█▄  ▄ ▄█ ▀█
+█ █▄▄▄█ █▀▄▀▀▄█▀▀▄▀█▀█ ▄▄ ▀▀█▄ ▄▄▄█
+█▄▄▄▄▄▄▄█▄█▄▄█▄▄███▄██▄█▄▄▄██▄██▄██
+
+› Metro waiting on
+[4mexp://59d1330d-a131-4d7d-b44d-58543c530ff4-00-tst3d44tzu5s.spock.replit.dev[24m
+› Scan the QR code above with Expo Go (Android) or the Camera app (iOS)
+
+› Web is waiting on [4mhttp://localhost:8081[24m
+
+› Using [36mExpo Go[39m
+› Press [1ms[22m [2m│[22m switch to development build
+
+› Press [1ma[22m [2m│[22m open Android
+› Press [1mw[22m [2m│[22m open web
+
+› Press [1mj[22m [2m│[22m open debugger
+› Press [1mr[22m [2m│[22m reload app
+› Press [1mm[22m [2m│[22m toggle menu
+› [1mshift+m[22m [2m│[22m more tools
+› Press [1mo[22m [2m│[22m open project code in your editor
+
+› Press [1m?[22m [2m│[22m show all commands
+
+Logs for your project will appear below.[2m Press Ctrl+C to exit.[22m
+[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [47m[37m░░░░░░░░░░░░░░░░[39m[49m[1m  0.0% [22m[2m(0/1)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [47m[37m░░░░░░░░░░░░░░░░[39m[49m[1m  4.8% [22m[2m( 47/214)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓[49m[39m[47m[37m░░░░░░░░░░░░░░[39m[49m[1m 18.7% [22m[2m(135/312)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓[49m[39m[47m[37m░░░░░░░░░░░[39m[49m[1m 34.8% [22m[2m(296/502)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░░░░[39m[49m[1m 38.7% [22m[2m(456/733)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░░░[39m[49m[1m 45.6% [22m[2m(622/921)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░░░[39m[49m[1m 61.4% [22m[2m( 796/1016)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░░░[39m[49m[1m 74.0% [22m[2m(1014/1179)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░░[39m[49m[1m 83.3% [22m[2m(1222/1339)[22m
+[80D[1A[0J[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░[39m[49m[1m 92.8% [22m[2m(1395/1448)[22m
+[80D[1A[0J[32m[1mWeb[22m Bundled [39m[2m1041ms[22m[0m[2m node_modules/expo-router/entry.js (1448 modules)[22m[0m
+[1mWeb[22m [0m[2mnode_modules/expo-router/[22m[0m[1mentry.js[22m [32m[42m▓▓▓▓▓▓▓▓▓▓▓▓▓▓[49m[39m[47m[37m░░[39m[49m[1m 92.8% [22m[2m(1395/1448)[22m
+[80D[1A[0J[7m[37m[1m LOG [22m[39m[27m [web] Logs will appear in the browser console
+[31m[7m[1m ERROR [22m[27m[39m SyntaxError: /home/runner/workspace/app/qr-detail/[id].tsx: Identifier 'hasMoreComments' has already been declared. (398:8)
+
+[0m [90m 396 |[39m   [36mconst[39m trust [33m=[39m getTrustInfo()[33m;[39m
+ [90m 397 |[39m   [36mconst[39m paymentApp [33m=[39m qrCode [33m?[39m detectPaymentApp(qrCode[33m.[39mcontent) [33m:[39m [36mnull[39m[33m;[39m
+[31m[1m>[22m[39m[90m 398 |[39m   [36mconst[39m hasMoreComments [33m=[39m commentsList[33m.[39mlength [33m<[39m commentsTotal[33m;[39m
+ [90m     |[39m         [31m[1m^[22m[39m
+ [90m 399 |[39m
+ [90m 400 |[39m   [36mif[39m (loading) {
+ [90m 401 |[39m     [36mreturn[39m ([0m
+    at constructor (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:365:19)
+    at TypeScriptParserMixin.raise (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:6599:19)
+    at TypeScriptScopeHandler.checkRedeclarationInScope (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1619:19)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1585:12)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4880:11)
+    at TypeScriptParserMixin.declareNameFromIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7567:16)
+    at TypeScriptParserMixin.checkIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7563:12)
+    at TypeScriptParserMixin.checkLVal (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7500:12)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13412:10)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9752:11)
+    at TypeScriptParserMixin.parseVar (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13383:12)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13230:10)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9408:31)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12851:23)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseStatementListItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12747:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:61)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseBlock (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13297:10)
+    at TypeScriptParserMixin.parseFunctionBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12100:24)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12086:10)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9172:18)
+    at /home/runner/workspace/node_modules/@babel/parser/lib/index.js:13445:12
+    at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12403:14)
+    at TypeScriptParserMixin.parseFunction (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13444:10)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13907:19)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9402:18)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13828:25)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9385:20)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12878:27)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseModuleItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12744:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:36)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseProgram (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12622:10)
+    at TypeScriptParserMixin.parseTopLevel (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12612:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14488:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10126:18)
+    at parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14501:26)
+    at parser (/home/runner/workspace/node_modules/@babel/core/lib/parser/index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+[31m[7m[1m ERROR [22m[27m[39m SyntaxError: /home/runner/workspace/app/qr-detail/[id].tsx: Identifier 'hasMoreComments' has already been declared. (398:8)
+
+[0m [90m 396 |[39m   [36mconst[39m trust [33m=[39m getTrustInfo()[33m;[39m
+ [90m 397 |[39m   [36mconst[39m paymentApp [33m=[39m qrCode [33m?[39m detectPaymentApp(qrCode[33m.[39mcontent) [33m:[39m [36mnull[39m[33m;[39m
+[31m[1m>[22m[39m[90m 398 |[39m   [36mconst[39m hasMoreComments [33m=[39m commentsList[33m.[39mlength [33m<[39m commentsTotal[33m;[39m
+ [90m     |[39m         [31m[1m^[22m[39m
+ [90m 399 |[39m
+ [90m 400 |[39m   [36mif[39m (loading) {
+ [90m 401 |[39m     [36mreturn[39m ([0m
+    at constructor (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:365:19)
+    at TypeScriptParserMixin.raise (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:6599:19)
+    at TypeScriptScopeHandler.checkRedeclarationInScope (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1619:19)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1585:12)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4880:11)
+    at TypeScriptParserMixin.declareNameFromIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7567:16)
+    at TypeScriptParserMixin.checkIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7563:12)
+    at TypeScriptParserMixin.checkLVal (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7500:12)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13412:10)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9752:11)
+    at TypeScriptParserMixin.parseVar (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13383:12)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13230:10)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9408:31)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12851:23)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseStatementListItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12747:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:61)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseBlock (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13297:10)
+    at TypeScriptParserMixin.parseFunctionBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12100:24)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12086:10)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9172:18)
+    at /home/runner/workspace/node_modules/@babel/parser/lib/index.js:13445:12
+    at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12403:14)
+    at TypeScriptParserMixin.parseFunction (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13444:10)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13907:19)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9402:18)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13828:25)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9385:20)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12878:27)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseModuleItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12744:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:36)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseProgram (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12622:10)
+    at TypeScriptParserMixin.parseTopLevel (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12612:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14488:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10126:18)
+    at parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14501:26)
+    at parser (/home/runner/workspace/node_modules/@babel/core/lib/parser/index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+[31m[7m[1m ERROR [22m[27m[39m SyntaxError: /home/runner/workspace/app/qr-detail/[id].tsx: Identifier 'hasMoreComments' has already been declared. (384:8)
+
+[0m [90m 382 |[39m   [36mconst[39m trust [33m=[39m getTrustInfo()[33m;[39m
+ [90m 383 |[39m   [36mconst[39m paymentApp [33m=[39m qrCode [33m?[39m detectPaymentApp(qrCode[33m.[39mcontent) [33m:[39m [36mnull[39m[33m;[39m
+[31m[1m>[22m[39m[90m 384 |[39m   [36mconst[39m hasMoreComments [33m=[39m commentsList[33m.[39mlength [33m<[39m commentsTotal[33m;[39m
+ [90m     |[39m         [31m[1m^[22m[39m
+ [90m 385 |[39m
+ [90m 386 |[39m   [36mif[39m (loading) {
+ [90m 387 |[39m     [36mreturn[39m ([0m
+    at constructor (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:365:19)
+    at TypeScriptParserMixin.raise (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:6599:19)
+    at TypeScriptScopeHandler.checkRedeclarationInScope (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1619:19)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1585:12)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4880:11)
+    at TypeScriptParserMixin.declareNameFromIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7567:16)
+    at TypeScriptParserMixin.checkIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7563:12)
+    at TypeScriptParserMixin.checkLVal (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7500:12)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13412:10)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9752:11)
+    at TypeScriptParserMixin.parseVar (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13383:12)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13230:10)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9408:31)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12851:23)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseStatementListItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12747:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:61)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseBlock (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13297:10)
+    at TypeScriptParserMixin.parseFunctionBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12100:24)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12086:10)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9172:18)
+    at /home/runner/workspace/node_modules/@babel/parser/lib/index.js:13445:12
+    at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12403:14)
+    at TypeScriptParserMixin.parseFunction (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13444:10)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13907:19)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9402:18)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13828:25)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9385:20)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12878:27)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseModuleItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12744:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:36)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseProgram (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12622:10)
+    at TypeScriptParserMixin.parseTopLevel (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12612:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14488:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10126:18)
+    at parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14501:26)
+    at parser (/home/runner/workspace/node_modules/@babel/core/lib/parser/index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+[31m[7m[1m ERROR [22m[27m[39m SyntaxError: /home/runner/workspace/app/qr-detail/[id].tsx: Identifier 'hasMoreComments' has already been declared. (384:8)
+
+[0m [90m 382 |[39m   [36mconst[39m trust [33m=[39m getTrustInfo()[33m;[39m
+ [90m 383 |[39m   [36mconst[39m paymentApp [33m=[39m qrCode [33m?[39m detectPaymentApp(qrCode[33m.[39mcontent) [33m:[39m [36mnull[39m[33m;[39m
+[31m[1m>[22m[39m[90m 384 |[39m   [36mconst[39m hasMoreComments [33m=[39m commentsList[33m.[39mlength [33m<[39m commentsTotal[33m;[39m
+ [90m     |[39m         [31m[1m^[22m[39m
+ [90m 385 |[39m
+ [90m 386 |[39m   [36mif[39m (loading) {
+ [90m 387 |[39m     [36mreturn[39m ([0m
+    at constructor (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:365:19)
+    at TypeScriptParserMixin.raise (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:6599:19)
+    at TypeScriptScopeHandler.checkRedeclarationInScope (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1619:19)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1585:12)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4880:11)
+    at TypeScriptParserMixin.declareNameFromIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7567:16)
+    at TypeScriptParserMixin.checkIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7563:12)
+    at TypeScriptParserMixin.checkLVal (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7500:12)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13412:10)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9752:11)
+    at TypeScriptParserMixin.parseVar (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13383:12)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13230:10)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9408:31)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12851:23)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseStatementListItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12747:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:61)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseBlock (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13297:10)
+    at TypeScriptParserMixin.parseFunctionBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12100:24)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12086:10)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9172:18)
+    at /home/runner/workspace/node_modules/@babel/parser/lib/index.js:13445:12
+    at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12403:14)
+    at TypeScriptParserMixin.parseFunction (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13444:10)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13907:19)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9402:18)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13828:25)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9385:20)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12878:27)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseModuleItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12744:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:36)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseProgram (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12622:10)
+    at TypeScriptParserMixin.parseTopLevel (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12612:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14488:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10126:18)
+    at parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14501:26)
+    at parser (/home/runner/workspace/node_modules/@babel/core/lib/parser/index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+[31m[7m[1m ERROR [22m[27m[39m SyntaxError: /home/runner/workspace/app/qr-detail/[id].tsx: Identifier 'hasMoreComments' has already been declared. (381:8)
+
+[0m [90m 379 |[39m   [36mconst[39m trust [33m=[39m getTrustInfo()[33m;[39m
+ [90m 380 |[39m   [36mconst[39m paymentApp [33m=[39m qrCode [33m?[39m detectPaymentApp(qrCode[33m.[39mcontent) [33m:[39m [36mnull[39m[33m;[39m
+[31m[1m>[22m[39m[90m 381 |[39m   [36mconst[39m hasMoreComments [33m=[39m commentsList[33m.[39mlength [33m<[39m commentsTotal[33m;[39m
+ [90m     |[39m         [31m[1m^[22m[39m
+ [90m 382 |[39m
+ [90m 383 |[39m   [36mif[39m (loading) {
+ [90m 384 |[39m     [36mreturn[39m ([0m
+    at constructor (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:365:19)
+    at TypeScriptParserMixin.raise (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:6599:19)
+    at TypeScriptScopeHandler.checkRedeclarationInScope (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1619:19)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1585:12)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4880:11)
+    at TypeScriptParserMixin.declareNameFromIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7567:16)
+    at TypeScriptParserMixin.checkIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7563:12)
+    at TypeScriptParserMixin.checkLVal (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7500:12)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13412:10)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9752:11)
+    at TypeScriptParserMixin.parseVar (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13383:12)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13230:10)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9408:31)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12851:23)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseStatementListItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12747:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:61)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseBlock (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13297:10)
+    at TypeScriptParserMixin.parseFunctionBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12100:24)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12086:10)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9172:18)
+    at /home/runner/workspace/node_modules/@babel/parser/lib/index.js:13445:12
+    at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12403:14)
+    at TypeScriptParserMixin.parseFunction (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13444:10)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13907:19)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9402:18)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13828:25)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9385:20)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12878:27)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseModuleItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12744:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:36)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseProgram (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12622:10)
+    at TypeScriptParserMixin.parseTopLevel (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12612:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14488:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10126:18)
+    at parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14501:26)
+    at parser (/home/runner/workspace/node_modules/@babel/core/lib/parser/index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+[31m[7m[1m ERROR [22m[27m[39m SyntaxError: /home/runner/workspace/app/qr-detail/[id].tsx: Identifier 'hasMoreComments' has already been declared. (381:8)
+
+[0m [90m 379 |[39m   [36mconst[39m trust [33m=[39m getTrustInfo()[33m;[39m
+ [90m 380 |[39m   [36mconst[39m paymentApp [33m=[39m qrCode [33m?[39m detectPaymentApp(qrCode[33m.[39mcontent) [33m:[39m [36mnull[39m[33m;[39m
+[31m[1m>[22m[39m[90m 381 |[39m   [36mconst[39m hasMoreComments [33m=[39m commentsList[33m.[39mlength [33m<[39m commentsTotal[33m;[39m
+ [90m     |[39m         [31m[1m^[22m[39m
+ [90m 382 |[39m
+ [90m 383 |[39m   [36mif[39m (loading) {
+ [90m 384 |[39m     [36mreturn[39m ([0m
+    at constructor (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:365:19)
+    at TypeScriptParserMixin.raise (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:6599:19)
+    at TypeScriptScopeHandler.checkRedeclarationInScope (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1619:19)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1585:12)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4880:11)
+    at TypeScriptParserMixin.declareNameFromIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7567:16)
+    at TypeScriptParserMixin.checkIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7563:12)
+    at TypeScriptParserMixin.checkLVal (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7500:12)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13412:10)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9752:11)
+    at TypeScriptParserMixin.parseVar (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13383:12)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13230:10)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9408:31)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12851:23)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseStatementListItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12747:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:61)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseBlock (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13297:10)
+    at TypeScriptParserMixin.parseFunctionBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12100:24)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12086:10)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9172:18)
+    at /home/runner/workspace/node_modules/@babel/parser/lib/index.js:13445:12
+    at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12403:14)
+    at TypeScriptParserMixin.parseFunction (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13444:10)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13907:19)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9402:18)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13828:25)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9385:20)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12878:27)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseModuleItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12744:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:36)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseProgram (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12622:10)
+    at TypeScriptParserMixin.parseTopLevel (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12612:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14488:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10126:18)
+    at parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14501:26)
+    at parser (/home/runner/workspace/node_modules/@babel/core/lib/parser/index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+[31m[7m[1m ERROR [22m[27m[39m SyntaxError: /home/runner/workspace/app/qr-detail/[id].tsx: Identifier 'hasMoreComments' has already been declared. (334:8)
+
+[0m [90m 332 |[39m   [36mconst[39m trust [33m=[39m getTrustInfo()[33m;[39m
+ [90m 333 |[39m   [36mconst[39m paymentApp [33m=[39m qrCode [33m?[39m detectPaymentApp(qrCode[33m.[39mcontent) [33m:[39m [36mnull[39m[33m;[39m
+[31m[1m>[22m[39m[90m 334 |[39m   [36mconst[39m hasMoreComments [33m=[39m commentsList[33m.[39mlength [33m<[39m commentsTotal[33m;[39m
+ [90m     |[39m         [31m[1m^[22m[39m
+ [90m 335 |[39m
+ [90m 336 |[39m   [36mif[39m (loading) {
+ [90m 337 |[39m     [36mreturn[39m ([0m
+    at constructor (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:365:19)
+    at TypeScriptParserMixin.raise (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:6599:19)
+    at TypeScriptScopeHandler.checkRedeclarationInScope (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1619:19)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1585:12)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4880:11)
+    at TypeScriptParserMixin.declareNameFromIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7567:16)
+    at TypeScriptParserMixin.checkIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7563:12)
+    at TypeScriptParserMixin.checkLVal (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7500:12)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13412:10)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9752:11)
+    at TypeScriptParserMixin.parseVar (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13383:12)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13230:10)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9408:31)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12851:23)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseStatementListItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12747:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:61)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseBlock (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13297:10)
+    at TypeScriptParserMixin.parseFunctionBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12100:24)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12086:10)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9172:18)
+    at /home/runner/workspace/node_modules/@babel/parser/lib/index.js:13445:12
+    at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12403:14)
+    at TypeScriptParserMixin.parseFunction (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13444:10)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13907:19)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9402:18)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13828:25)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9385:20)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12878:27)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseModuleItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12744:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:36)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseProgram (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12622:10)
+    at TypeScriptParserMixin.parseTopLevel (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12612:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14488:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10126:18)
+    at parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14501:26)
+    at parser (/home/runner/workspace/node_modules/@babel/core/lib/parser/index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)
+[31m[7m[1m ERROR [22m[27m[39m SyntaxError: /home/runner/workspace/app/qr-detail/[id].tsx: Identifier 'hasMoreComments' has already been declared. (334:8)
+
+[0m [90m 332 |[39m   [36mconst[39m trust [33m=[39m getTrustInfo()[33m;[39m
+ [90m 333 |[39m   [36mconst[39m paymentApp [33m=[39m qrCode [33m?[39m detectPaymentApp(qrCode[33m.[39mcontent) [33m:[39m [36mnull[39m[33m;[39m
+[31m[1m>[22m[39m[90m 334 |[39m   [36mconst[39m hasMoreComments [33m=[39m commentsList[33m.[39mlength [33m<[39m commentsTotal[33m;[39m
+ [90m     |[39m         [31m[1m^[22m[39m
+ [90m 335 |[39m
+ [90m 336 |[39m   [36mif[39m (loading) {
+ [90m 337 |[39m     [36mreturn[39m ([0m
+    at constructor (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:365:19)
+    at TypeScriptParserMixin.raise (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:6599:19)
+    at TypeScriptScopeHandler.checkRedeclarationInScope (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1619:19)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:1585:12)
+    at TypeScriptScopeHandler.declareName (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:4880:11)
+    at TypeScriptParserMixin.declareNameFromIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7567:16)
+    at TypeScriptParserMixin.checkIdentifier (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7563:12)
+    at TypeScriptParserMixin.checkLVal (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:7500:12)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13412:10)
+    at TypeScriptParserMixin.parseVarId (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9752:11)
+    at TypeScriptParserMixin.parseVar (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13383:12)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13230:10)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9408:31)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12851:23)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseStatementListItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12747:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:61)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseBlock (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13297:10)
+    at TypeScriptParserMixin.parseFunctionBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12100:24)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12086:10)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9172:18)
+    at /home/runner/workspace/node_modules/@babel/parser/lib/index.js:13445:12
+    at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12403:14)
+    at TypeScriptParserMixin.parseFunction (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13444:10)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13907:19)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9402:18)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13828:25)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9385:20)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12878:27)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseModuleItem (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12744:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13316:36)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseProgram (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12622:10)
+    at TypeScriptParserMixin.parseTopLevel (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:12612:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14488:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:10126:18)
+    at parse (/home/runner/workspace/node_modules/@babel/parser/lib/index.js:14501:26)
+    at parser (/home/runner/workspace/node_modules/@babel/core/lib/parser/index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (/home/runner/workspace/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (/home/runner/workspace/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/home/runner/workspace/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/home/runner/workspace/node_modules/gensync/index.js:251:28)

@@ -16,8 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
-import { getApiUrl } from "@/lib/query-client";
-import { fetch } from "expo/fetch";
+import { getUserScans, getUserFavorites } from "@/lib/firestore-service";
 
 interface HistoryItem {
   id: string;
@@ -51,27 +50,21 @@ export default function HistoryScreen() {
       });
     }
 
-    if (user && token) {
+    if (user) {
       try {
-        const baseUrl = getApiUrl();
-        const res = await fetch(`${baseUrl}api/user/history`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const cloudScans = await getUserScans(user.id);
+        cloudScans.forEach((s: any) => {
+          if (!items.find((i) => i.qrCodeId === s.qrCodeId)) {
+            items.push({
+              id: s.id,
+              content: s.content,
+              contentType: s.contentType,
+              scannedAt: s.scannedAt,
+              qrCodeId: s.qrCodeId,
+              source: "cloud",
+            });
+          }
         });
-        if (res.ok) {
-          const data = await res.json();
-          data.history.forEach((s: any) => {
-            if (!items.find((i) => i.qrCodeId === s.qrCodeId)) {
-              items.push({
-                id: s.id,
-                content: s.content,
-                contentType: s.contentType,
-                scannedAt: s.scannedAt,
-                qrCodeId: s.qrCodeId,
-                source: "cloud",
-              });
-            }
-          });
-        }
       } catch (e) {}
     }
 
@@ -79,32 +72,26 @@ export default function HistoryScreen() {
       (a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime()
     );
     setHistory(items);
-  }, [user, token]);
+  }, [user]);
 
   const loadFavorites = useCallback(async () => {
-    if (!user || !token) {
+    if (!user) {
       setFavorites([]);
       return;
     }
     try {
-      const baseUrl = getApiUrl();
-      const res = await fetch(`${baseUrl}api/user/favorites`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const favItems: HistoryItem[] = (data.favorites || []).map((f: any) => ({
-          id: f.id,
-          content: f.content || f.qrCodeId,
-          contentType: f.contentType || "text",
-          scannedAt: f.createdAt,
-          qrCodeId: f.qrCodeId,
-          source: "favorite" as const,
-        }));
-        setFavorites(favItems);
-      }
+      const favs = await getUserFavorites(user.id);
+      const favItems: HistoryItem[] = favs.map((f: any) => ({
+        id: f.id,
+        content: f.content || f.qrCodeId,
+        contentType: f.contentType || "text",
+        scannedAt: f.createdAt,
+        qrCodeId: f.qrCodeId,
+        source: "favorite" as const,
+      }));
+      setFavorites(favItems);
     } catch (e) {}
-  }, [user, token]);
+  }, [user]);
 
   useEffect(() => {
     loadHistory();

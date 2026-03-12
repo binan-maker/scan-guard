@@ -19,8 +19,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
-import { getApiUrl } from "@/lib/query-client";
-import { fetch } from "expo/fetch";
+import {
+  getUserFollowing,
+  getUserComments,
+  softDeleteComment,
+  submitFeedback,
+  deleteUserAccount,
+} from "@/lib/firestore-service";
 
 type Section = "main" | "account" | "guide" | "feedback" | "following" | "comments";
 
@@ -78,36 +83,25 @@ export default function SettingsScreen() {
       return;
     }
     try {
-      const baseUrl = getApiUrl();
-      const res = await fetch(`${baseUrl}api/user/account`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        await signOut();
-        Alert.alert(
-          "Account Deleted",
-          "Your account has been scheduled for deletion. You have 14 days to contact support to recover it."
-        );
-      } else {
-        const d = await res.json();
-        Alert.alert("Error", d.message || "Failed to delete account");
+      if (user) {
+        await deleteUserAccount(user.id);
       }
+      await signOut();
+      Alert.alert(
+        "Account Deleted",
+        "Your account has been scheduled for deletion. You have 14 days to contact support to recover it."
+      );
     } catch (e: any) {
-      Alert.alert("Error", e.message);
+      Alert.alert("Error", e.message || "Failed to delete account");
     }
   }
 
   async function loadFollowing() {
     setFollowingLoading(true);
     try {
-      const baseUrl = getApiUrl();
-      const res = await fetch(`${baseUrl}api/user/following`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setFollowingList(data.following || []);
+      if (user) {
+        const list = await getUserFollowing(user.id);
+        setFollowingList(list);
       }
     } catch (e) {}
     setFollowingLoading(false);
@@ -116,19 +110,15 @@ export default function SettingsScreen() {
   async function loadMyComments() {
     setCommentsLoading(true);
     try {
-      const baseUrl = getApiUrl();
-      const res = await fetch(`${baseUrl}api/user/comments`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setMyComments(data.comments || []);
+      if (user) {
+        const comments = await getUserComments(user.id);
+        setMyComments(comments);
       }
     } catch (e) {}
     setCommentsLoading(false);
   }
 
-  async function handleDeleteComment(commentId: string) {
+  async function handleDeleteComment(commentId: string, qrCodeId: string) {
     Alert.alert("Delete Comment", "Remove this comment?", [
       { text: "Cancel", style: "cancel" },
       {
@@ -136,15 +126,9 @@ export default function SettingsScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            const baseUrl = getApiUrl();
-            await fetch(`${baseUrl}api/user/comments`, {
-              method: "DELETE",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ commentId }),
-            });
+            if (user) {
+              await softDeleteComment(qrCodeId, commentId, user.id);
+            }
             setMyComments((prev) => prev.filter((c) => c.id !== commentId));
           } catch (e) {}
         },
@@ -159,15 +143,11 @@ export default function SettingsScreen() {
     }
     setFeedbackSubmitting(true);
     try {
-      const baseUrl = getApiUrl();
-      await fetch(`${baseUrl}api/feedback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: feedbackText.trim(),
-          email: feedbackEmail.trim() || undefined,
-        }),
-      });
+      await submitFeedback(
+        user?.id || null,
+        feedbackEmail.trim() || null,
+        feedbackText.trim()
+      );
       setFeedbackDone(true);
       setFeedbackText("");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -582,7 +562,7 @@ function FollowingSection({ loading, list }: { loading: boolean; list: any[] }) 
   );
 }
 
-function CommentsSection({ loading, comments, onDelete }: { loading: boolean; comments: any[]; onDelete: (id: string) => void }) {
+function CommentsSection({ loading, comments, onDelete }: { loading: boolean; comments: any[]; onDelete: (id: string, qrCodeId: string) => void }) {
   const insets = useSafeAreaInsets();
   if (loading) {
     return (
@@ -614,7 +594,7 @@ function CommentsSection({ loading, comments, onDelete }: { loading: boolean; co
               {new Date(item.createdAt).toLocaleDateString()}
             </Text>
             <Pressable
-              onPress={() => onDelete(item.id)}
+              onPress={() => onDelete(item.id, item.qrCodeId)}
               style={styles.deleteCommentBtn}
             >
               <Ionicons name="trash-outline" size={16} color={Colors.dark.danger} />
