@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,11 @@ import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserScans, getUserFavorites } from "@/lib/firestore-service";
+import {
+  parseUpiQr,
+  analyzePaymentQr,
+  analyzeUrlHeuristics,
+} from "@/lib/qr-analysis";
 
 interface HistoryItem {
   id: string;
@@ -27,7 +32,8 @@ interface HistoryItem {
   source: "local" | "cloud" | "favorite";
 }
 
-type Filter = "all" | "url" | "text" | "other" | "favorites";
+type Filter = "all" | "url" | "text" | "payment" | "other" | "favorites";
+type RiskLevel = "safe" | "caution" | "dangerous";
 
 export default function HistoryScreen() {
   const { user, token } = useAuth();
@@ -135,13 +141,44 @@ export default function HistoryScreen() {
     }
   }
 
+  const safetyRiskMap = useMemo<Map<string, RiskLevel>>(() => {
+    const map = new Map<string, RiskLevel>();
+    const allItems = [...history, ...favorites];
+    for (const item of allItems) {
+      if (item.contentType === "url") {
+        try {
+          const result = analyzeUrlHeuristics(item.content);
+          map.set(item.id, result.riskLevel as RiskLevel);
+        } catch {
+          map.set(item.id, "safe");
+        }
+      } else if (item.contentType === "payment") {
+        try {
+          const parsed = parseUpiQr(item.content);
+          if (parsed) {
+            const result = analyzePaymentQr(parsed);
+            map.set(item.id, result.riskLevel as RiskLevel);
+          } else {
+            map.set(item.id, "safe");
+          }
+        } catch {
+          map.set(item.id, "safe");
+        }
+      } else {
+        map.set(item.id, "safe");
+      }
+    }
+    return map;
+  }, [history, favorites]);
+
   const displayItems: HistoryItem[] = filter === "favorites"
     ? favorites
     : history.filter((item) => {
         if (filter === "all") return true;
         if (filter === "url") return item.contentType === "url";
         if (filter === "text") return item.contentType === "text";
-        return !["url", "text"].includes(item.contentType);
+        if (filter === "payment") return item.contentType === "payment";
+        return !["url", "text", "payment"].includes(item.contentType);
       });
 
   function formatDate(d: string) {
@@ -161,105 +198,127 @@ export default function HistoryScreen() {
   const FILTERS: { key: Filter; label: string }[] = [
     { key: "all", label: "All" },
     { key: "url", label: "URLs" },
+    { key: "payment", label: "Payment" },
     { key: "text", label: "Text" },
     { key: "other", label: "Other" },
     ...(user ? [{ key: "favorites" as Filter, label: "Favorites" }] : []),
   ];
 
   const renderItem = useCallback(
-    ({ item }: { item: HistoryItem }) => (
-      <Pressable
-        onPress={() => {
-          if (item.qrCodeId) {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push({
-              pathname: "/qr-detail/[id]",
-              params: { id: item.qrCodeId },
-            });
-          }
-        }}
-        style={({ pressed }) => [styles.historyItem, { opacity: pressed ? 0.8 : 1 }]}
-      >
-        <View style={[
-          styles.itemIcon,
-          {
-            backgroundColor: item.source === "favorite"
-              ? Colors.dark.dangerDim
-              : Colors.dark.primaryDim,
-          },
-        ]}>
-          <Ionicons
-            name={
-              item.source === "favorite"
-                ? "heart"
-                : (getContentIcon(item.contentType) as any)
+    ({ item }: { item: HistoryItem }) => {
+      const risk = safetyRiskMap.get(item.id) ?? "safe";
+      const showRiskBadge = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
+      const riskColor = risk === "dangerous" ? Colors.dark.danger : Colors.dark.warning;
+      const riskBgColor = risk === "dangerous" ? Colors.dark.dangerDim : Colors.dark.warningDim;
+
+      return (
+        <Pressable
+          onPress={() => {
+            if (item.qrCodeId) {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push({
+                pathname: "/qr-detail/[id]",
+                params: { id: item.qrCodeId },
+              });
             }
-            size={20}
-            color={item.source === "favorite" ? Colors.dark.danger : Colors.dark.primary}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.itemContent} numberOfLines={1}>
-            {item.content}
-          </Text>
-          <View style={styles.itemMeta}>
-            <Text style={styles.itemDate}>{formatDate(item.scannedAt)}</Text>
-            <View
-              style={[
-                styles.sourceBadge,
-                {
-                  backgroundColor:
-                    item.source === "favorite"
-                      ? Colors.dark.dangerDim
-                      : item.source === "cloud"
-                      ? Colors.dark.accentDim
-                      : Colors.dark.surfaceLight,
-                },
-              ]}
-            >
-              <Ionicons
-                name={
-                  item.source === "favorite"
-                    ? "heart"
-                    : item.source === "cloud"
-                    ? "cloud"
-                    : "phone-portrait"
-                }
-                size={10}
-                color={
-                  item.source === "favorite"
-                    ? Colors.dark.danger
-                    : item.source === "cloud"
-                    ? Colors.dark.accent
-                    : Colors.dark.textMuted
-                }
-              />
-              <Text
-                style={[
-                  styles.sourceText,
-                  {
-                    color:
+          }}
+          style={({ pressed }) => [styles.historyItem, { opacity: pressed ? 0.8 : 1 }]}
+        >
+          <View style={[
+            styles.itemIcon,
+            {
+              backgroundColor: item.source === "favorite"
+                ? Colors.dark.dangerDim
+                : Colors.dark.primaryDim,
+            },
+          ]}>
+            <Ionicons
+              name={
+                item.source === "favorite"
+                  ? "heart"
+                  : (getContentIcon(item.contentType) as any)
+              }
+              size={20}
+              color={item.source === "favorite" ? Colors.dark.danger : Colors.dark.primary}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.itemContent} numberOfLines={1}>
+              {item.content}
+            </Text>
+            <View style={styles.itemMeta}>
+              <Text style={styles.itemDate}>{formatDate(item.scannedAt)}</Text>
+              <View style={styles.badgesRow}>
+                {showRiskBadge ? (
+                  <View style={[styles.riskBadge, { backgroundColor: riskBgColor }]}>
+                    <Ionicons
+                      name={risk === "dangerous" ? "warning" : "alert-circle"}
+                      size={10}
+                      color={riskColor}
+                    />
+                    <Text style={[styles.riskBadgeText, { color: riskColor }]}>
+                      {risk === "dangerous" ? "Dangerous" : "Caution"}
+                    </Text>
+                  </View>
+                ) : null}
+                <View
+                  style={[
+                    styles.sourceBadge,
+                    {
+                      backgroundColor:
+                        item.source === "favorite"
+                          ? Colors.dark.dangerDim
+                          : item.source === "cloud"
+                          ? Colors.dark.accentDim
+                          : Colors.dark.surfaceLight,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name={
+                      item.source === "favorite"
+                        ? "heart"
+                        : item.source === "cloud"
+                        ? "cloud"
+                        : "phone-portrait"
+                    }
+                    size={10}
+                    color={
                       item.source === "favorite"
                         ? Colors.dark.danger
                         : item.source === "cloud"
                         ? Colors.dark.accent
-                        : Colors.dark.textMuted,
-                  },
-                ]}
-              >
-                {item.source === "favorite"
-                  ? "Favorite"
-                  : item.source === "cloud"
-                  ? "Synced"
-                  : "Local"}
-              </Text>
+                        : Colors.dark.textMuted
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.sourceText,
+                      {
+                        color:
+                          item.source === "favorite"
+                            ? Colors.dark.danger
+                            : item.source === "cloud"
+                            ? Colors.dark.accent
+                            : Colors.dark.textMuted,
+                      },
+                    ]}
+                  >
+                    {item.source === "favorite"
+                      ? "Favorite"
+                      : item.source === "cloud"
+                      ? "Synced"
+                      : "Local"}
+                  </Text>
+                </View>
+              </View>
             </View>
           </View>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={Colors.dark.textMuted} />
-      </Pressable>
-    ),
-    []
+          <Ionicons name="chevron-forward" size={18} color={Colors.dark.textMuted} />
+        </Pressable>
+      );
+    },
+    [safetyRiskMap]
   );
 
   return (
@@ -461,6 +520,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: Colors.dark.textMuted,
+  },
+  badgesRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexWrap: "wrap",
+  },
+  riskBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  riskBadgeText: {
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
   },
   sourceBadge: {
     flexDirection: "row",

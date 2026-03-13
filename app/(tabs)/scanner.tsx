@@ -26,6 +26,13 @@ import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/query-client";
 import { getOrCreateQrCode, recordScan } from "@/lib/firestore-service";
+import {
+  parseUpiQr,
+  analyzePaymentQr,
+  analyzeUrlHeuristics,
+  loadOfflineBlacklist,
+  checkOfflineBlacklist,
+} from "@/lib/qr-analysis";
 
 const FINDER_SIZE = 270;
 const CORNER_SIZE = 32;
@@ -48,6 +55,12 @@ export default function ScannerScreen() {
   const [flashOn, setFlashOn] = useState(false);
   const [zoom, setZoom] = useState(0);
   const [zoomLabel, setZoomLabel] = useState("1×");
+
+  // Safety interstitial state
+  const [safetyModal, setSafetyModal] = useState(false);
+  const [pendingQrId, setPendingQrId] = useState<string | null>(null);
+  const [safetyWarnings, setSafetyWarnings] = useState<string[]>([]);
+  const [safetyRiskLevel, setSafetyRiskLevel] = useState<"caution" | "dangerous">("caution");
 
   const scanLockRef = useRef(false);
   const canScanRef = useRef(false);
@@ -126,6 +139,42 @@ export default function ScannerScreen() {
     [scanned, anonymousMode, token]
   );
 
+  async function runSafetyCheck(content: string, contentType: string): Promise<{ riskLevel: "safe" | "caution" | "dangerous"; warnings: string[] }> {
+    const warnings: string[] = [];
+    let riskLevel: "safe" | "caution" | "dangerous" = "safe";
+
+    // Offline blacklist check
+    const blacklist = await loadOfflineBlacklist();
+    const blMatch = checkOfflineBlacklist(content, blacklist);
+    if (blMatch.matched) {
+      warnings.push(`Known scam pattern: ${blMatch.reason}`);
+      riskLevel = "dangerous";
+    }
+
+    // Payment QR check
+    if (contentType === "payment") {
+      const parsed = parseUpiQr(content);
+      if (parsed) {
+        const result = analyzePaymentQr(parsed);
+        warnings.push(...result.warnings);
+        if (result.riskLevel === "dangerous") riskLevel = "dangerous";
+        else if (result.riskLevel === "caution" && riskLevel === "safe") riskLevel = "caution";
+      }
+    }
+
+    // URL heuristic check
+    if (contentType === "url") {
+      try {
+        const result = analyzeUrlHeuristics(content);
+        warnings.push(...result.warnings);
+        if (result.riskLevel === "dangerous") riskLevel = "dangerous";
+        else if (result.riskLevel === "caution" && riskLevel === "safe") riskLevel = "caution";
+      } catch {}
+    }
+
+    return { riskLevel, warnings };
+  }
+
   async function processScan(content: string) {
     setProcessing(true);
     try {
@@ -154,10 +203,27 @@ export default function ScannerScreen() {
         await AsyncStorage.setItem("local_scan_history", JSON.stringify(history));
       }
 
-      setScanSuccess(true);
       setProcessing(false);
-      await new Promise((r) => setTimeout(r, 300));
-      router.push(`/qr-detail/${qr.id}`);
+
+      // Run instant safety analysis
+      const { riskLevel, warnings } = await runSafetyCheck(content, qr.contentType);
+
+      if (riskLevel !== "safe" && warnings.length > 0) {
+        // Show safety interstitial
+        setPendingQrId(qr.id);
+        setSafetyWarnings(warnings);
+        setSafetyRiskLevel(riskLevel as "caution" | "dangerous");
+        setSafetyModal(true);
+        Haptics.notificationAsync(
+          riskLevel === "dangerous"
+            ? Haptics.NotificationFeedbackType.Error
+            : Haptics.NotificationFeedbackType.Warning
+        );
+      } else {
+        setScanSuccess(true);
+        await new Promise((r) => setTimeout(r, 300));
+        router.push(`/qr-detail/${qr.id}`);
+      }
     } catch (e: any) {
       // Even if Firebase fails (offline), we can still navigate with local data
       try {
@@ -165,10 +231,20 @@ export default function ScannerScreen() {
         const contentType = detectContentType(content);
         const qrId = await getQrCodeId(content);
         await AsyncStorage.setItem(`qr_content_${qrId}`, JSON.stringify({ content, contentType }));
-        setScanSuccess(true);
+
         setProcessing(false);
-        await new Promise((r) => setTimeout(r, 300));
-        router.push(`/qr-detail/${qrId}`);
+        const { riskLevel, warnings } = await runSafetyCheck(content, contentType);
+        if (riskLevel !== "safe" && warnings.length > 0) {
+          setPendingQrId(qrId);
+          setSafetyWarnings(warnings);
+          setSafetyRiskLevel(riskLevel as "caution" | "dangerous");
+          setSafetyModal(true);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        } else {
+          setScanSuccess(true);
+          await new Promise((r) => setTimeout(r, 300));
+          router.push(`/qr-detail/${qrId}`);
+        }
         return;
       } catch {}
 
@@ -184,6 +260,24 @@ export default function ScannerScreen() {
     } finally {
       setProcessing(false);
     }
+  }
+
+  function handleSafetyModalProceed() {
+    if (!pendingQrId) return;
+    setSafetyModal(false);
+    setScanSuccess(true);
+    router.push(`/qr-detail/${pendingQrId}`);
+  }
+
+  function handleSafetyModalBack() {
+    setSafetyModal(false);
+    setPendingQrId(null);
+    setSafetyWarnings([]);
+    setScanned(false);
+    setProcessing(false);
+    setScanSuccess(false);
+    scanLockRef.current = false;
+    canScanRef.current = true;
   }
 
   async function handlePickImage() {
@@ -497,6 +591,63 @@ export default function ScannerScreen() {
           </Reanimated.View>
         </View>
       ) : null}
+
+      {/* Safety Interstitial Modal */}
+      {safetyModal ? (
+        <View style={styles.safetyOverlay}>
+          <Reanimated.View entering={FadeInDown.duration(350)} style={styles.safetySheet}>
+            {/* Risk badge */}
+            <View style={[
+              styles.safetyBadge,
+              { backgroundColor: safetyRiskLevel === "dangerous" ? Colors.dark.dangerDim : Colors.dark.warningDim },
+            ]}>
+              <Ionicons
+                name={safetyRiskLevel === "dangerous" ? "warning" : "alert-circle"}
+                size={32}
+                color={safetyRiskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning}
+              />
+            </View>
+
+            <Text style={[
+              styles.safetyTitle,
+              { color: safetyRiskLevel === "dangerous" ? Colors.dark.danger : Colors.dark.warning },
+            ]}>
+              {safetyRiskLevel === "dangerous" ? "Danger Detected" : "Caution Advised"}
+            </Text>
+            <Text style={styles.safetySubtitle}>
+              {safetyRiskLevel === "dangerous"
+                ? "This QR code shows strong signs of being a scam or phishing attempt."
+                : "This QR code has some suspicious characteristics. Proceed carefully."}
+            </Text>
+
+            {/* Warnings list */}
+            <View style={styles.safetyWarningsList}>
+              {safetyWarnings.map((w, i) => (
+                <View key={i} style={styles.safetyWarningItem}>
+                  <Ionicons name="ellipse" size={6} color={Colors.dark.warning} style={{ marginTop: 6 }} />
+                  <Text style={styles.safetyWarningText}>{w}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Actions */}
+            <Pressable
+              onPress={handleSafetyModalBack}
+              style={styles.safetyBackBtn}
+            >
+              <Ionicons name="arrow-back" size={18} color="#000" />
+              <Text style={styles.safetyBackBtnText}>Go Back (Recommended)</Text>
+            </Pressable>
+            <Pressable
+              onPress={handleSafetyModalProceed}
+              style={styles.safetyProceedBtn}
+            >
+              <Text style={styles.safetyProceedBtnText}>View Details Anyway</Text>
+              <Ionicons name="chevron-forward" size={16} color={Colors.dark.textMuted} />
+            </Pressable>
+          </Reanimated.View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -780,6 +931,91 @@ const styles = StyleSheet.create({
     color: Colors.dark.textSecondary,
     textAlign: "center",
     lineHeight: 18,
+  },
+  safetyOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.88)",
+    justifyContent: "flex-end",
+    alignItems: "center",
+  },
+  safetySheet: {
+    width: "100%",
+    backgroundColor: Colors.dark.surface,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 28,
+    paddingBottom: 48,
+    alignItems: "center",
+    gap: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  safetyBadge: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  safetyTitle: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    textAlign: "center",
+  },
+  safetySubtitle: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    color: Colors.dark.textSecondary,
+    textAlign: "center",
+    lineHeight: 21,
+    marginBottom: 4,
+  },
+  safetyWarningsList: {
+    width: "100%",
+    backgroundColor: Colors.dark.surfaceLight,
+    borderRadius: 14,
+    padding: 16,
+    gap: 8,
+  },
+  safetyWarningItem: {
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "flex-start",
+  },
+  safetyWarningText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.dark.textSecondary,
+    lineHeight: 19,
+  },
+  safetyBackBtn: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: Colors.dark.warning,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginTop: 4,
+  },
+  safetyBackBtnText: {
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+    color: "#000",
+  },
+  safetyProceedBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 10,
+  },
+  safetyProceedBtnText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.dark.textMuted,
   },
   permissionBox: {
     flex: 1,

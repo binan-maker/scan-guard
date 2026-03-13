@@ -102,6 +102,31 @@ Path: `notifications/{userId}/items/{notifId}`
 
 QR code IDs are SHA-256 hashes of the QR content (first 20 characters), not UUIDs.
 
+## QR Safety Analysis Engine (`lib/qr-analysis.ts`)
+
+- **UPI/Payment QR parser** (`parseUpiQr`): Parses UPI deep links — extracts payee name, VPA, bank handle, amount, note, scheme
+- **Payment heuristic analyzer** (`analyzePaymentQr`): Validates NPCI bank handles, detects brand impersonation, suspicious payment amounts, missing payee names
+- **URL heuristic analyzer** (`analyzeUrlHeuristics`): Detects HTTP (not HTTPS), IP-based URLs, URL shorteners, suspicious TLDs, brand impersonation, sensitive path keywords (login, password, verify, etc.)
+- **Offline blacklist** (`loadOfflineBlacklist`, `checkOfflineBlacklist`, `BUILT_IN_BLACKLIST`): 15 built-in scam patterns cached in AsyncStorage; pattern matching against QR content
+- **Comment keyword filter** (`checkCommentKeywords`): Blocks spam/scam keywords at submission time
+- All functions return `{ riskLevel: "safe" | "caution" | "dangerous", warnings: string[] }`
+
+## Scanner Safety Interstitial
+
+- After scanning any QR, the app runs instant offline safety analysis (no network needed)
+- If `riskLevel` is "caution" or "dangerous": shows a bottom-sheet overlay with:
+  - Risk level badge (yellow for caution, red for dangerous)
+  - Specific warning bullets explaining what was detected
+  - "Go Back (Recommended)" primary action + "View Details Anyway" escape hatch
+  - Haptic feedback (warning for caution, error for dangerous)
+- If safe: navigates directly to QR detail as before (no extra friction)
+
+## History Screen Safety Badges
+
+- Each URL and payment item shows an inline colored badge ("Caution" / "Dangerous") based on offline heuristics
+- New "Payment" filter tab in the filter bar
+- Badges computed synchronously via `useMemo` over all history + favorites
+
 ## Key Dependencies
 
 - `expo` ~54.0.27, `expo-router` ~6.0.17
