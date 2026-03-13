@@ -26,7 +26,6 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import { StatusBar } from "expo-status-bar";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -83,11 +82,11 @@ const REPORT_TYPES = [
   { key: "spam", label: "Spam", icon: "mail-unread", color: Colors.dark.accent, bg: Colors.dark.accentDim },
 ];
 
-const PAYMENT_APPS: { prefix: string; name: string; icon: string; packageAndroid?: string; schemeIOS?: string }[] = [
-  { prefix: "upi://", name: "UPI Payment", icon: "card", packageAndroid: "com.google.android.apps.nbu.paisa.user", schemeIOS: "gpay" },
-  { prefix: "phonepe://", name: "PhonePe", icon: "phone-portrait", packageAndroid: "com.phonepe.app" },
-  { prefix: "paytm://", name: "Paytm", icon: "wallet", packageAndroid: "net.one97.paytm" },
-  { prefix: "gpay://", name: "Google Pay", icon: "card-outline", packageAndroid: "com.google.android.apps.nbu.paisa.user" },
+const PAYMENT_APPS: { prefix: string; name: string; icon: string }[] = [
+  { prefix: "upi://", name: "UPI Payment", icon: "card" },
+  { prefix: "phonepe://", name: "PhonePe", icon: "phone-portrait" },
+  { prefix: "paytm://", name: "Paytm", icon: "wallet" },
+  { prefix: "gpay://", name: "Google Pay", icon: "card-outline" },
 ];
 
 const COMMENT_REPORT_REASONS = [
@@ -113,6 +112,102 @@ function detectPaymentApp(content: string) {
 
 const COMMENTS_PER_PAGE = 20;
 const REPLIES_PER_PAGE = 10;
+
+// Shimmer skeleton box
+function SkeletonBox({ width, height = 12, borderRadius = 8, style }: { width?: any; height?: number; borderRadius?: number; style?: any }) {
+  const shimmer = useSharedValue(0);
+  useEffect(() => {
+    shimmer.value = withRepeat(withSequence(withTiming(1, { duration: 800 }), withTiming(0.3, { duration: 800 })), -1, true);
+  }, []);
+  const anim = useAnimatedStyle(() => ({ opacity: shimmer.value }));
+  return <Animated.View style={[{ width: width || "100%", height, borderRadius, backgroundColor: Colors.dark.surfaceLight }, anim, style]} />;
+}
+
+function SkeletonCommentItem() {
+  return (
+    <View style={skeletonStyles.commentCard}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        <SkeletonBox width={34} height={34} borderRadius={17} />
+        <View style={{ flex: 1, gap: 6 }}>
+          <SkeletonBox width="50%" height={11} />
+        </View>
+      </View>
+      <SkeletonBox height={11} style={{ marginBottom: 6 }} />
+      <SkeletonBox width="75%" height={11} />
+    </View>
+  );
+}
+
+function LoadingSkeleton({ topInset }: { topInset: number }) {
+  return (
+    <View style={[skeletonStyles.container, { paddingTop: topInset }]}>
+      {/* Nav */}
+      <View style={skeletonStyles.navBar}>
+        <SkeletonBox width={38} height={38} borderRadius={19} />
+        <SkeletonBox width={100} height={16} borderRadius={8} style={{ marginHorizontal: "auto" }} />
+        <SkeletonBox width={80} height={32} borderRadius={16} />
+      </View>
+      <ScrollView contentContainerStyle={{ padding: 16 }} scrollEnabled={false}>
+        {/* Content card */}
+        <View style={skeletonStyles.card}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <SkeletonBox width={48} height={48} borderRadius={14} />
+            <SkeletonBox width={60} height={24} borderRadius={8} />
+          </View>
+          <SkeletonBox height={13} style={{ marginBottom: 8 }} />
+          <SkeletonBox width="80%" height={13} style={{ marginBottom: 8 }} />
+          <SkeletonBox width="50%" height={13} style={{ marginBottom: 16 }} />
+          <SkeletonBox width={120} height={36} borderRadius={12} />
+        </View>
+        {/* Trust card */}
+        <View style={skeletonStyles.card}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 14 }}>
+            <SkeletonBox width={100} height={18} borderRadius={8} />
+            <SkeletonBox width={80} height={24} borderRadius={12} />
+          </View>
+          <SkeletonBox height={6} borderRadius={3} style={{ marginBottom: 16 }} />
+          <View style={{ flexDirection: "row", justifyContent: "space-around" }}>
+            {[0, 1, 2].map((i) => (
+              <View key={i} style={{ alignItems: "center", gap: 6 }}>
+                <SkeletonBox width={40} height={22} borderRadius={6} />
+                <SkeletonBox width={50} height={11} borderRadius={6} />
+              </View>
+            ))}
+          </View>
+        </View>
+        {/* Report buttons */}
+        <SkeletonBox width={120} height={18} borderRadius={8} style={{ marginBottom: 10 }} />
+        <SkeletonBox width={180} height={12} borderRadius={6} style={{ marginBottom: 14 }} />
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
+          {[0, 1, 2, 3].map((i) => (
+            <SkeletonBox key={i} width="47%" height={90} borderRadius={14} />
+          ))}
+        </View>
+        {/* Comments */}
+        <SkeletonBox width={100} height={18} borderRadius={8} style={{ marginBottom: 14 }} />
+        <SkeletonBox height={50} borderRadius={14} style={{ marginBottom: 16 }} />
+        {[0, 1, 2].map((i) => <SkeletonCommentItem key={i} />)}
+      </ScrollView>
+    </View>
+  );
+}
+
+const skeletonStyles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: Colors.dark.background },
+  navBar: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
+  },
+  card: {
+    backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 18,
+    marginBottom: 16, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+  },
+  commentCard: {
+    backgroundColor: Colors.dark.surface, borderRadius: 14, padding: 14,
+    marginBottom: 8, borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
+  },
+});
 
 export default function QrDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -142,32 +237,23 @@ export default function QrDetailScreen() {
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
 
-  // Comment menu modal state
-  const [commentMenuModal, setCommentMenuModal] = useState<{
-    id: string;
-    isOwner: boolean;
-  } | null>(null);
+  // Inline 3-dot menu (not modal)
+  const [commentMenuId, setCommentMenuId] = useState<string | null>(null);
+  const [commentMenuOwner, setCommentMenuOwner] = useState(false);
+  // Report modal
   const [commentReportModal, setCommentReportModal] = useState<string | null>(null);
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
 
-  // Threaded reply state
+  // Threaded replies
   const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({});
   const [visibleRepliesCount, setVisibleRepliesCount] = useState<Record<string, number>>({});
 
-  // Sign-in button glow animation
+  // Sign-in banner glow
   const glowOpacity = useSharedValue(0.6);
   const glowScale = useSharedValue(1);
   useEffect(() => {
-    glowOpacity.value = withRepeat(
-      withSequence(withTiming(1, { duration: 900 }), withTiming(0.6, { duration: 900 })),
-      -1,
-      true
-    );
-    glowScale.value = withRepeat(
-      withSequence(withTiming(1.03, { duration: 900 }), withTiming(1, { duration: 900 })),
-      -1,
-      true
-    );
+    glowOpacity.value = withRepeat(withSequence(withTiming(1, { duration: 900 }), withTiming(0.6, { duration: 900 })), -1, true);
+    glowScale.value = withRepeat(withSequence(withTiming(1.03, { duration: 900 }), withTiming(1, { duration: 900 })), -1, true);
   }, []);
   const signInGlowStyle = useAnimatedStyle(() => ({
     opacity: glowOpacity.value,
@@ -176,53 +262,37 @@ export default function QrDetailScreen() {
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
-  // Build threaded structure from flat commentsList
+  // Build threaded structure — BFS to find ALL descendants under each root
   const topLevelComments = commentsList.filter((c) => !c.parentId);
-  const repliesByParent = commentsList.reduce<Record<string, CommentItem[]>>((acc, c) => {
-    if (c.parentId) {
-      if (!acc[c.parentId]) acc[c.parentId] = [];
-      acc[c.parentId].push(c);
+
+  function getAllDescendants(rootId: string): CommentItem[] {
+    const result: CommentItem[] = [];
+    const queue = [rootId];
+    while (queue.length > 0) {
+      const pid = queue.shift()!;
+      const children = commentsList.filter((c) => c.parentId === pid);
+      result.push(...children);
+      queue.push(...children.map((c) => c.id));
     }
-    return acc;
-  }, {});
-
-  function getRepliesForParent(parentId: string): CommentItem[] {
-    return repliesByParent[parentId] || [];
+    return result.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }
 
-  function getVisibleReplies(parentId: string): CommentItem[] {
-    const all = getRepliesForParent(parentId);
-    const count = visibleRepliesCount[parentId] || REPLIES_PER_PAGE;
-    return all.slice(0, count);
-  }
-
-  function handleToggleReplies(parentId: string) {
-    setExpandedReplies((prev) => ({ ...prev, [parentId]: !prev[parentId] }));
-    if (!visibleRepliesCount[parentId]) {
-      setVisibleRepliesCount((prev) => ({ ...prev, [parentId]: REPLIES_PER_PAGE }));
+  function toggleReplies(commentId: string) {
+    setExpandedReplies((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
+    if (!visibleRepliesCount[commentId]) {
+      setVisibleRepliesCount((prev) => ({ ...prev, [commentId]: REPLIES_PER_PAGE }));
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
-  function handleShowMoreReplies(parentId: string) {
+  function showMoreReplies(commentId: string) {
     setVisibleRepliesCount((prev) => ({
       ...prev,
-      [parentId]: (prev[parentId] || REPLIES_PER_PAGE) + REPLIES_PER_PAGE,
+      [commentId]: (prev[commentId] || REPLIES_PER_PAGE) + REPLIES_PER_PAGE,
     }));
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
-  // When replying to a reply, pin to the top-level parent so threading stays 2-level
-  function handleReplyPress(comment: CommentItem) {
-    const rootParentId = comment.parentId ?? comment.id;
-    setReplyTo({ id: rootParentId, author: comment.user.displayName });
-    if (comment.parentId) {
-      // Expand replies for the parent
-      setExpandedReplies((prev) => ({ ...prev, [comment.parentId!]: true }));
-    }
-  }
-
-  // Fetch user like status for comments
+  // Fetch user like statuses
   useEffect(() => {
     if (!user || !commentsList.length) return;
     const ids = commentsList.map((c) => c.id);
@@ -286,12 +356,8 @@ export default function QrDetailScreen() {
     setCommentsLoading(false);
   }, [id, commentsLoading, hasMoreComments]);
 
-  function promptSignIn(action: string) {
-    router.push("/(auth)/login");
-  }
-
   async function handleReport(type: string) {
-    if (!user) { promptSignIn("report"); return; }
+    if (!user) { router.push("/(auth)/login"); return; }
     setReportLoading(type);
     try {
       await reportQrCode(id, user.id, type);
@@ -305,7 +371,7 @@ export default function QrDetailScreen() {
   }
 
   async function handleToggleFavorite() {
-    if (!user) { promptSignIn("favorite"); return; }
+    if (!user) { router.push("/(auth)/login"); return; }
     if (!qrCode) return;
     setFavoriteLoading(true);
     try {
@@ -317,7 +383,7 @@ export default function QrDetailScreen() {
   }
 
   async function handleToggleFollow() {
-    if (!user) { promptSignIn("follow"); return; }
+    if (!user) { router.push("/(auth)/login"); return; }
     if (!qrCode) return;
     setFollowLoading(true);
     try {
@@ -330,7 +396,7 @@ export default function QrDetailScreen() {
   }
 
   async function handleSubmitComment() {
-    if (!user) { promptSignIn("comment"); return; }
+    if (!user) { router.push("/(auth)/login"); return; }
     if (!newComment.trim()) return;
     setSubmitting(true);
     try {
@@ -346,7 +412,7 @@ export default function QrDetailScreen() {
   }
 
   async function handleCommentLike(commentId: string, action: "like" | "dislike") {
-    if (!user) { promptSignIn("like"); return; }
+    if (!user) { router.push("/(auth)/login"); return; }
     try {
       const data = await toggleCommentLike(id, commentId, user.id, action === "like");
       const prevLike = userLikes[commentId] ?? null;
@@ -376,25 +442,16 @@ export default function QrDetailScreen() {
 
   async function handleDeleteComment(commentId: string) {
     if (!user) return;
-    setCommentMenuModal(null);
-    Alert.alert("Delete Comment", "Are you sure you want to delete this comment?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          setDeletingCommentId(commentId);
-          try {
-            await softDeleteComment(id, commentId, user.id);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          } catch {
-            Alert.alert("Error", "Could not delete comment.");
-          } finally {
-            setDeletingCommentId(null);
-          }
-        },
-      },
-    ]);
+    setCommentMenuId(null);
+    setDeletingCommentId(commentId);
+    try {
+      await softDeleteComment(id, commentId, user.id);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      // silent
+    } finally {
+      setDeletingCommentId(null);
+    }
   }
 
   function handleOpenContent() {
@@ -425,17 +482,17 @@ export default function QrDetailScreen() {
     return { score: safeRatio * 100, label: "Dangerous", color: Colors.dark.danger };
   }
 
-  const trust = getTrustInfo();
-  const paymentApp = qrCode ? detectPaymentApp(qrCode.content) : null;
-
-  // Render a single comment (used for both top-level and replies)
   function renderComment(comment: CommentItem, isReply: boolean = false) {
     const currentUserLike = userLikes[comment.id] ?? null;
     const isOwner = user?.id === comment.userId;
-    const replyCount = !isReply ? getRepliesForParent(comment.id).length : 0;
+    const descendants = !isReply ? getAllDescendants(comment.id) : [];
+    const replyCount = descendants.length;
     const isExpanded = expandedReplies[comment.id] ?? false;
-    const visibleReplies = getVisibleReplies(comment.id);
-    const hasMoreReplies = replyCount > (visibleRepliesCount[comment.id] || REPLIES_PER_PAGE);
+    const showCount = visibleRepliesCount[comment.id] || REPLIES_PER_PAGE;
+    const visibleReplies = descendants.slice(0, showCount);
+    const hasMore = replyCount > showCount;
+    const isMenuOpen = commentMenuId === comment.id;
+    const isDeleting = deletingCommentId === comment.id;
 
     return (
       <View key={comment.id}>
@@ -443,81 +500,118 @@ export default function QrDetailScreen() {
           <View style={[styles.commentItem, isReply && styles.replyItem]}>
             <View style={styles.commentHeader}>
               <View style={[styles.commentAvatar, isReply && styles.replyAvatar]}>
-                <Text style={styles.commentAvatarText}>
-                  {comment.isDeleted ? "?" : comment.user.displayName.charAt(0).toUpperCase()}
+                <Text style={[styles.commentAvatarText, isReply && { fontSize: 12 }]}>
+                  {comment.user.displayName.charAt(0).toUpperCase()}
                 </Text>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.commentAuthor}>{smartName(comment.user.displayName)}</Text>
-                <Text style={styles.commentTime}>{formatRelativeTime(comment.createdAt)}</Text>
+              <View style={styles.commentMeta}>
+                <Text style={styles.commentAuthor} numberOfLines={1}>
+                  {smartName(comment.user.displayName)}
+                  <Text style={styles.commentTimeDot}>  ·  </Text>
+                  <Text style={styles.commentTimeInline}>{formatRelativeTime(comment.createdAt)}</Text>
+                </Text>
               </View>
-              {!comment.isDeleted ? (
-                <Pressable
-                  onPress={() => setCommentMenuModal({ id: comment.id, isOwner })}
-                  style={styles.commentMenuBtn}
-                >
+              <Pressable
+                onPress={() => {
+                  if (isMenuOpen) {
+                    setCommentMenuId(null);
+                  } else {
+                    setCommentMenuId(comment.id);
+                    setCommentMenuOwner(isOwner);
+                  }
+                }}
+                style={styles.commentMenuBtn}
+              >
+                {isDeleting ? (
+                  <ActivityIndicator size="small" color={Colors.dark.danger} />
+                ) : (
                   <Ionicons name="ellipsis-horizontal" size={18} color={Colors.dark.textMuted} />
-                </Pressable>
-              ) : null}
+                )}
+              </Pressable>
             </View>
 
-            <Text style={[styles.commentText, comment.isDeleted && styles.commentTextDeleted]}>
-              {comment.text}
-            </Text>
+            <Text style={styles.commentText}>{comment.text}</Text>
 
-            {!comment.isDeleted ? (
-              <View style={styles.commentActions}>
-                <Pressable onPress={() => handleCommentLike(comment.id, "like")} style={styles.commentActionBtn}>
-                  <Ionicons
-                    name={currentUserLike === "like" ? "thumbs-up" : "thumbs-up-outline"}
-                    size={16}
-                    color={currentUserLike === "like" ? Colors.dark.safe : Colors.dark.textMuted}
-                  />
-                  {comment.likeCount > 0 ? (
-                    <Text style={[styles.commentActionCount, currentUserLike === "like" && { color: Colors.dark.safe }]}>
-                      {comment.likeCount}
-                    </Text>
-                  ) : null}
-                </Pressable>
-                <Pressable onPress={() => handleCommentLike(comment.id, "dislike")} style={styles.commentActionBtn}>
-                  <Ionicons
-                    name={currentUserLike === "dislike" ? "thumbs-down" : "thumbs-down-outline"}
-                    size={16}
-                    color={currentUserLike === "dislike" ? Colors.dark.danger : Colors.dark.textMuted}
-                  />
-                  {comment.dislikeCount > 0 ? (
-                    <Text style={[styles.commentActionCount, currentUserLike === "dislike" && { color: Colors.dark.danger }]}>
-                      {comment.dislikeCount}
-                    </Text>
-                  ) : null}
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    if (!user) { promptSignIn("reply"); return; }
-                    handleReplyPress(comment);
-                  }}
-                  style={styles.commentActionBtn}
-                >
-                  <Ionicons name="return-down-forward-outline" size={16} color={Colors.dark.textMuted} />
-                  <Text style={styles.commentActionCount}>Reply</Text>
-                </Pressable>
+            <View style={styles.commentActions}>
+              <Pressable onPress={() => handleCommentLike(comment.id, "like")} style={styles.commentActionBtn}>
+                <Ionicons
+                  name={currentUserLike === "like" ? "thumbs-up" : "thumbs-up-outline"}
+                  size={15}
+                  color={currentUserLike === "like" ? Colors.dark.safe : Colors.dark.textMuted}
+                />
+                {comment.likeCount > 0 ? (
+                  <Text style={[styles.commentActionCount, currentUserLike === "like" && { color: Colors.dark.safe }]}>
+                    {comment.likeCount}
+                  </Text>
+                ) : null}
+              </Pressable>
+              <Pressable onPress={() => handleCommentLike(comment.id, "dislike")} style={styles.commentActionBtn}>
+                <Ionicons
+                  name={currentUserLike === "dislike" ? "thumbs-down" : "thumbs-down-outline"}
+                  size={15}
+                  color={currentUserLike === "dislike" ? Colors.dark.danger : Colors.dark.textMuted}
+                />
+                {comment.dislikeCount > 0 ? (
+                  <Text style={[styles.commentActionCount, currentUserLike === "dislike" && { color: Colors.dark.danger }]}>
+                    {comment.dislikeCount}
+                  </Text>
+                ) : null}
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  if (!user) { router.push("/(auth)/login"); return; }
+                  setReplyTo({ id: comment.id, author: comment.user.displayName });
+                  if (comment.parentId) {
+                    setExpandedReplies((prev) => ({ ...prev, [comment.parentId!]: true }));
+                  }
+                }}
+                style={styles.commentActionBtn}
+              >
+                <Ionicons name="return-down-forward-outline" size={15} color={Colors.dark.textMuted} />
+                <Text style={styles.commentActionCount}>Reply</Text>
+              </Pressable>
+            </View>
+
+            {/* Inline dropdown menu — appears right below 3-dots */}
+            {isMenuOpen ? (
+              <View style={styles.inlineMenu}>
+                {isOwner ? (
+                  <Pressable
+                    onPress={() => handleDeleteComment(comment.id)}
+                    style={styles.inlineMenuItem}
+                  >
+                    <Ionicons name="trash-outline" size={14} color={Colors.dark.danger} />
+                    <Text style={[styles.inlineMenuText, { color: Colors.dark.danger }]}>Delete</Text>
+                  </Pressable>
+                ) : (
+                  <Pressable
+                    onPress={() => {
+                      setCommentMenuId(null);
+                      setCommentReportModal(comment.id);
+                    }}
+                    style={styles.inlineMenuItem}
+                  >
+                    <Ionicons name="flag-outline" size={14} color={Colors.dark.warning} />
+                    <Text style={[styles.inlineMenuText, { color: Colors.dark.warning }]}>Report</Text>
+                  </Pressable>
+                )}
               </View>
             ) : null}
           </View>
         </Animated.View>
 
-        {/* Replies toggle for top-level comments */}
+        {/* Show Replies toggle */}
         {!isReply && replyCount > 0 ? (
           <View style={styles.repliesToggleRow}>
-            <View style={styles.repliesLine} />
-            <Pressable onPress={() => handleToggleReplies(comment.id)} style={styles.repliesToggleBtn}>
+            <View style={styles.repliesConnector} />
+            <Pressable onPress={() => toggleReplies(comment.id)} style={styles.repliesToggleBtn}>
               <Ionicons
                 name={isExpanded ? "chevron-up" : "chevron-down"}
-                size={14}
+                size={13}
                 color={Colors.dark.primary}
               />
               <Text style={styles.repliesToggleText}>
-                {isExpanded ? "Hide replies" : `${replyCount} ${replyCount === 1 ? "Reply" : "Replies"}`}
+                {isExpanded ? "Hide replies" : "Show replies"}
               </Text>
             </Pressable>
           </View>
@@ -527,8 +621,8 @@ export default function QrDetailScreen() {
         {!isReply && isExpanded ? (
           <View style={styles.repliesContainer}>
             {visibleReplies.map((reply) => renderComment(reply, true))}
-            {hasMoreReplies ? (
-              <Pressable onPress={() => handleShowMoreReplies(comment.id)} style={styles.showMoreRepliesBtn}>
+            {hasMore ? (
+              <Pressable onPress={() => showMoreReplies(comment.id)} style={styles.showMoreRepliesBtn}>
                 <Text style={styles.showMoreRepliesText}>Show more replies</Text>
               </Pressable>
             ) : null}
@@ -538,21 +632,16 @@ export default function QrDetailScreen() {
     );
   }
 
+  const trust = getTrustInfo();
+  const paymentApp = qrCode ? detectPaymentApp(qrCode.content) : null;
+
   if (loading) {
-    return (
-      <View style={[styles.container, { paddingTop: topInset }]}>
-        <StatusBar style="light" backgroundColor={Colors.dark.background} translucent={false} />
-        <View style={styles.loadingCenter}>
-          <ActivityIndicator size="large" color={Colors.dark.primary} />
-        </View>
-      </View>
-    );
+    return <LoadingSkeleton topInset={topInset} />;
   }
 
   if (!qrCode || loadError) {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
-        <StatusBar style="light" backgroundColor={Colors.dark.background} translucent={false} />
         <View style={styles.loadingCenter}>
           <Ionicons name="alert-circle" size={48} color={Colors.dark.danger} />
           <Text style={styles.errorText}>QR code not found</Text>
@@ -566,14 +655,13 @@ export default function QrDetailScreen() {
 
   return (
     <>
-      <StatusBar style="light" backgroundColor={Colors.dark.background} translucent={false} />
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: Colors.dark.background }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={0}
       >
         <View style={[styles.container, { paddingTop: topInset }]}>
-          {/* Nav bar */}
+          {/* Nav */}
           <View style={styles.navBar}>
             <Pressable onPress={() => router.back()} style={styles.navBackBtn}>
               <Ionicons name="chevron-back" size={24} color={Colors.dark.text} />
@@ -619,26 +707,20 @@ export default function QrDetailScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
+            onScrollBeginDrag={() => setCommentMenuId(null)}
           >
-            {/* Sign-in banner for unauthenticated users */}
+            {/* Sign-in banner */}
             {!user ? (
               <Animated.View style={signInGlowStyle}>
-                <Pressable
-                  onPress={() => router.push("/(auth)/login")}
-                  style={styles.signInBanner}
-                >
+                <Pressable onPress={() => router.push("/(auth)/login")} style={styles.signInBanner}>
                   <View style={styles.signInBannerIcon}>
                     <Ionicons name="person-circle-outline" size={28} color={Colors.dark.primary} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.signInBannerTitle}>Sign in to continue</Text>
-                    <Text style={styles.signInBannerSub}>
-                      Report, follow, favorite & comment on QR codes
-                    </Text>
+                    <Text style={styles.signInBannerSub}>Report, follow, favorite & comment</Text>
                   </View>
-                  <View style={styles.signInBannerArrow}>
-                    <Ionicons name="arrow-forward" size={18} color={Colors.dark.primary} />
-                  </View>
+                  <Ionicons name="arrow-forward" size={18} color={Colors.dark.primary} />
                 </Pressable>
               </Animated.View>
             ) : null}
@@ -744,7 +826,7 @@ export default function QrDetailScreen() {
               </View>
             </Animated.View>
 
-            {/* Comments Section */}
+            {/* Comments */}
             <Animated.View entering={FadeInDown.duration(400).delay(300)}>
               <View style={styles.commentsHeader}>
                 <View style={styles.commentsTitleRow}>
@@ -827,51 +909,7 @@ export default function QrDetailScreen() {
         </View>
       </KeyboardAvoidingView>
 
-      {/* Comment 3-dot menu - centered card modal */}
-      <Modal
-        visible={!!commentMenuModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setCommentMenuModal(null)}
-      >
-        <Pressable style={styles.centeredOverlay} onPress={() => setCommentMenuModal(null)}>
-          <Pressable style={styles.centeredCard} onPress={() => {}}>
-            <View style={styles.centeredCardHandle} />
-            {commentMenuModal?.isOwner ? (
-              <Pressable
-                onPress={() => commentMenuModal && handleDeleteComment(commentMenuModal.id)}
-                disabled={deletingCommentId === commentMenuModal?.id}
-                style={styles.menuCardOption}
-              >
-                {deletingCommentId === commentMenuModal?.id ? (
-                  <ActivityIndicator size="small" color={Colors.dark.danger} />
-                ) : (
-                  <Ionicons name="trash-outline" size={20} color={Colors.dark.danger} />
-                )}
-                <Text style={[styles.menuCardOptionText, { color: Colors.dark.danger }]}>Delete Comment</Text>
-              </Pressable>
-            ) : (
-              <Pressable
-                onPress={() => {
-                  const cid = commentMenuModal?.id;
-                  setCommentMenuModal(null);
-                  if (cid) setCommentReportModal(cid);
-                }}
-                style={styles.menuCardOption}
-              >
-                <Ionicons name="flag-outline" size={20} color={Colors.dark.warning} />
-                <Text style={[styles.menuCardOptionText, { color: Colors.dark.warning }]}>Report Comment</Text>
-              </Pressable>
-            )}
-            <View style={styles.menuCardDivider} />
-            <Pressable onPress={() => setCommentMenuModal(null)} style={styles.menuCardCancel}>
-              <Text style={styles.menuCardCancelText}>Cancel</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* Comment report - centered card */}
+      {/* Comment report — centered card */}
       <Modal
         visible={!!commentReportModal}
         transparent
@@ -881,11 +919,9 @@ export default function QrDetailScreen() {
         <Pressable style={styles.centeredOverlay} onPress={() => setCommentReportModal(null)}>
           <Pressable style={styles.reportCard2} onPress={() => {}}>
             <Text style={styles.reportCardTitle}>Report</Text>
-            <Text style={styles.reportCardSubtitle}>
-              What's going on?{"\n"}
-              <Text style={styles.reportCardNote}>
-                We'll check for all community guidelines, so don't worry about making the perfect choice.
-              </Text>
+            <Text style={styles.reportCardSubtitleBold}>What's going on?</Text>
+            <Text style={styles.reportCardNote}>
+              We'll check for all community guidelines, so don't worry about making the perfect choice.
             </Text>
             <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 360 }}>
               {COMMENT_REPORT_REASONS.map((r, idx) => (
@@ -936,27 +972,20 @@ const styles = StyleSheet.create({
   backLinkText: { color: Colors.dark.primary, fontFamily: "Inter_600SemiBold", fontSize: 15 },
 
   navBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.dark.surfaceBorder,
+    flexDirection: "row", alignItems: "center",
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
+    backgroundColor: Colors.dark.background,
   },
   navBackBtn: {
     width: 38, height: 38, borderRadius: 19,
-    backgroundColor: Colors.dark.surface,
-    alignItems: "center", justifyContent: "center",
+    backgroundColor: Colors.dark.surface, alignItems: "center", justifyContent: "center",
   },
-  navTitle: {
-    flex: 1, fontSize: 17, fontFamily: "Inter_700Bold",
-    color: Colors.dark.text, textAlign: "center",
-  },
+  navTitle: { flex: 1, fontSize: 17, fontFamily: "Inter_700Bold", color: Colors.dark.text, textAlign: "center" },
   navActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   navActionBtn: {
     width: 38, height: 38, borderRadius: 19,
-    backgroundColor: Colors.dark.surface,
-    alignItems: "center", justifyContent: "center",
+    backgroundColor: Colors.dark.surface, alignItems: "center", justifyContent: "center",
   },
   followBtn: {
     flexDirection: "row", alignItems: "center", gap: 6,
@@ -974,7 +1003,6 @@ const styles = StyleSheet.create({
 
   scrollContent: { padding: 16 },
 
-  // Sign-in banner
   signInBanner: {
     flexDirection: "row", alignItems: "center", gap: 12,
     backgroundColor: Colors.dark.primaryDim,
@@ -983,17 +1011,11 @@ const styles = StyleSheet.create({
   },
   signInBannerIcon: {
     width: 46, height: 46, borderRadius: 23,
-    backgroundColor: Colors.dark.primaryDim,
-    alignItems: "center", justifyContent: "center",
+    backgroundColor: Colors.dark.primaryDim, alignItems: "center", justifyContent: "center",
     borderWidth: 1, borderColor: Colors.dark.primary + "60",
   },
   signInBannerTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: Colors.dark.text },
   signInBannerSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginTop: 2 },
-  signInBannerArrow: {
-    width: 34, height: 34, borderRadius: 17,
-    backgroundColor: Colors.dark.primary + "20",
-    alignItems: "center", justifyContent: "center",
-  },
 
   contentCard: {
     backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 18,
@@ -1073,7 +1095,10 @@ const styles = StyleSheet.create({
     flex: 1, fontSize: 14, fontFamily: "Inter_400Regular",
     color: Colors.dark.text, maxHeight: 100, paddingTop: 8, paddingBottom: 8,
   },
-  sendBtn: { width: 38, height: 38, borderRadius: 12, backgroundColor: Colors.dark.primary, alignItems: "center", justifyContent: "center" },
+  sendBtn: {
+    width: 38, height: 38, borderRadius: 12,
+    backgroundColor: Colors.dark.primary, alignItems: "center", justifyContent: "center",
+  },
 
   signInToComment: {
     flexDirection: "row", alignItems: "center", gap: 8,
@@ -1104,42 +1129,65 @@ const styles = StyleSheet.create({
   commentAvatar: {
     width: 34, height: 34, borderRadius: 17,
     backgroundColor: Colors.dark.primaryDim, alignItems: "center", justifyContent: "center",
+    flexShrink: 0,
   },
   commentAvatarText: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.dark.primary },
-  commentAuthor: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.text },
-  commentTime: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted, marginTop: 1 },
-  commentMenuBtn: { padding: 4 },
-  commentText: { fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.text, lineHeight: 20, marginBottom: 10 },
-  commentTextDeleted: { color: Colors.dark.textMuted, fontStyle: "italic" },
-  commentActions: { flexDirection: "row", gap: 16, alignItems: "center" },
-  commentActionBtn: { flexDirection: "row", alignItems: "center", gap: 5 },
+  commentMeta: { flex: 1, minWidth: 0 },
+  commentAuthor: {
+    fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.text,
+    flexShrink: 1,
+  },
+  commentTimeDot: { fontSize: 12, color: Colors.dark.textMuted, fontFamily: "Inter_400Regular" },
+  commentTimeInline: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.dark.textMuted },
+  commentMenuBtn: { padding: 6, marginLeft: 4 },
+  commentText: {
+    fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.dark.text,
+    lineHeight: 20, marginBottom: 10,
+  },
+  commentActions: { flexDirection: "row", gap: 14, alignItems: "center" },
+  commentActionBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
   commentActionCount: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
+
+  // Inline dropdown menu
+  inlineMenu: {
+    position: "absolute",
+    top: 40,
+    right: 8,
+    backgroundColor: Colors.dark.surfaceLight,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.dark.surfaceBorder,
+    overflow: "hidden",
+    zIndex: 100,
+    minWidth: 110,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  inlineMenuItem: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingHorizontal: 14, paddingVertical: 11,
+  },
+  inlineMenuText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
 
   // Replies
   repliesToggleRow: {
     flexDirection: "row", alignItems: "center",
-    marginLeft: 20, marginBottom: 4, marginTop: -2,
+    marginLeft: 18, marginBottom: 4, marginTop: -2,
   },
-  repliesLine: {
-    width: 20, height: 1,
-    backgroundColor: Colors.dark.primary + "40",
-    marginRight: 6,
+  repliesConnector: {
+    width: 18, height: 1, backgroundColor: Colors.dark.primary + "40", marginRight: 4,
   },
   repliesToggleBtn: {
     flexDirection: "row", alignItems: "center", gap: 4,
-    paddingVertical: 6, paddingHorizontal: 10,
+    paddingVertical: 6, paddingHorizontal: 8,
   },
-  repliesToggleText: {
-    fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary,
-  },
+  repliesToggleText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
   repliesContainer: { marginLeft: 14, marginBottom: 6 },
-  showMoreRepliesBtn: {
-    paddingVertical: 8, paddingHorizontal: 14,
-    alignSelf: "flex-start",
-  },
-  showMoreRepliesText: {
-    fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary,
-  },
+  showMoreRepliesBtn: { paddingVertical: 8, paddingHorizontal: 14, alignSelf: "flex-start" },
+  showMoreRepliesText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
 
   loadMoreBtn: {
     alignItems: "center", paddingVertical: 14,
@@ -1148,46 +1196,24 @@ const styles = StyleSheet.create({
   },
   loadMoreText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.primary },
 
-  // Centered overlay for modals
   centeredOverlay: {
     flex: 1, backgroundColor: "rgba(0,0,0,0.75)",
     justifyContent: "center", alignItems: "center",
   },
-  centeredCard: {
-    backgroundColor: Colors.dark.surface, borderRadius: 20,
-    padding: 8, width: "85%", maxWidth: 340,
-    borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
-  },
-  centeredCardHandle: {
-    width: 36, height: 4, borderRadius: 2,
-    backgroundColor: Colors.dark.surfaceBorder, alignSelf: "center", marginBottom: 8,
-  },
-  menuCardOption: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    paddingHorizontal: 20, paddingVertical: 16, borderRadius: 12,
-  },
-  menuCardOptionText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  menuCardDivider: { height: 1, backgroundColor: Colors.dark.surfaceBorder, marginHorizontal: 8 },
-  menuCardCancel: { alignItems: "center", paddingVertical: 16 },
-  menuCardCancelText: { fontSize: 15, fontFamily: "Inter_500Medium", color: Colors.dark.textMuted },
-
-  // Report modal card
   reportCard2: {
     backgroundColor: Colors.dark.surface, borderRadius: 20,
     padding: 20, width: "90%", maxWidth: 380,
     borderWidth: 1, borderColor: Colors.dark.surfaceBorder,
   },
-  reportCardTitle: { fontSize: 20, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 8 },
-  reportCardSubtitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text, marginBottom: 4 },
-  reportCardNote: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary },
-  reportCardOption: {
-    flexDirection: "row", alignItems: "center",
-    paddingVertical: 14,
-  },
-  reportCardOptionBorder: {
-    borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder,
-  },
+  reportCardTitle: { fontSize: 20, fontFamily: "Inter_700Bold", color: Colors.dark.text, marginBottom: 4 },
+  reportCardSubtitleBold: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.dark.text, marginBottom: 2 },
+  reportCardNote: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.dark.textSecondary, marginBottom: 12, lineHeight: 18 },
+  reportCardOption: { flexDirection: "row", alignItems: "center", paddingVertical: 13 },
+  reportCardOptionBorder: { borderBottomWidth: 1, borderBottomColor: Colors.dark.surfaceBorder },
   reportCardOptionText: { fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.dark.text, flex: 1 },
-  reportCardCancel: { alignItems: "center", paddingVertical: 14, marginTop: 4, borderTopWidth: 1, borderTopColor: Colors.dark.surfaceBorder },
+  reportCardCancel: {
+    alignItems: "center", paddingVertical: 14, marginTop: 4,
+    borderTopWidth: 1, borderTopColor: Colors.dark.surfaceBorder,
+  },
   reportCardCancelText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.dark.danger },
 });

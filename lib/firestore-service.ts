@@ -235,22 +235,24 @@ export function subscribeToComments(
   return onSnapshot(
     q,
     (snap) => {
-      const comments: CommentItem[] = snap.docs.map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          qrCodeId: qrId,
-          userId: data.userId,
-          text: data.isDeleted ? "[deleted]" : data.text,
-          parentId: data.parentId || null,
-          isDeleted: data.isDeleted || false,
-          likeCount: data.likeCount || 0,
-          dislikeCount: data.dislikeCount || 0,
-          createdAt: tsToString(data.createdAt),
-          userLike: null,
-          user: { displayName: data.isDeleted ? "[deleted]" : (data.userDisplayName || "User") },
-        };
-      });
+      const comments: CommentItem[] = snap.docs
+        .filter((d) => !d.data().isDeleted)
+        .map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            qrCodeId: qrId,
+            userId: data.userId,
+            text: data.text,
+            parentId: data.parentId || null,
+            isDeleted: false,
+            likeCount: data.likeCount || 0,
+            dislikeCount: data.dislikeCount || 0,
+            createdAt: tsToString(data.createdAt),
+            userLike: null,
+            user: { displayName: data.userDisplayName || "User" },
+          };
+        });
       onUpdate(comments);
     },
     () => {} // swallow permission / network errors
@@ -578,7 +580,7 @@ export async function softDeleteComment(
   const ref = doc(firestore, "qrCodes", qrId, "comments", commentId);
   const snap = await getDoc(ref);
   if (snap.exists() && snap.data().userId === userId) {
-    await updateDoc(ref, { isDeleted: true, text: "" });
+    await deleteDoc(ref);
     try {
       await updateDoc(doc(firestore, "qrCodes", qrId), { commentCount: increment(-1) });
     } catch {}

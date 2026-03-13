@@ -209,7 +209,7 @@ export default function HomeScreen() {
                 ) : null}
                 {user ? (
                   <Pressable
-                    onPress={() => router.push("/(tabs)/settings")}
+                    onPress={() => router.push("/(tabs)/profile")}
                     style={styles.avatarCircle}
                   >
                     <Text style={styles.avatarText}>

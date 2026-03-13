@@ -52,6 +52,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "house", selected: "house.fill" }} />
         <Label>Home</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="qr-generator">
+        <Icon sf={{ default: "qrcode", selected: "qrcode" }} />
+        <Label>Generate</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="scanner">
         <Icon sf={{ default: "qrcode.viewfinder", selected: "qrcode.viewfinder" }} />
         <Label>Scan</Label>
@@ -59,6 +63,10 @@ function NativeTabLayout() {
       <NativeTabs.Trigger name="history">
         <Icon sf={{ default: "clock", selected: "clock.fill" }} />
         <Label>History</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="profile">
+        <Icon sf={{ default: "person", selected: "person.fill" }} />
+        <Label>Profile</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -91,18 +99,9 @@ function ClassicTabLayout() {
         },
         tabBarBackground: () =>
           isIOS ? (
-            <BlurView
-              intensity={100}
-              tint="dark"
-              style={StyleSheet.absoluteFill}
-            />
+            <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                { backgroundColor: Colors.dark.surface },
-              ]}
-            />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: Colors.dark.surface }]} />
           ),
         tabBarLabelStyle: {
           fontFamily: "Inter_500Medium",
@@ -126,11 +125,16 @@ function ClassicTabLayout() {
             borderRadius: 8,
           },
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "home" : "home-outline"}
-              size={24}
-              color={color}
-            />
+            <Ionicons name={focused ? "home" : "home-outline"} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="qr-generator"
+        options={{
+          title: "Generate",
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons name={focused ? "qrcode-edit" : "qrcode"} size={24} color={color} />
           ),
         }}
       />
@@ -149,11 +153,16 @@ function ClassicTabLayout() {
         options={{
           title: "History",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "time" : "time-outline"}
-              size={24}
-              color={color}
-            />
+            <Ionicons name={focused ? "time" : "time-outline"} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "person" : "person-outline"} size={24} color={color} />
           ),
         }}
       />
