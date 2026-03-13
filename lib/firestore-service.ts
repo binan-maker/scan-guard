@@ -118,27 +118,74 @@ export function detectContentType(content: string): string {
   }
 }
 
-export function calculateTrustScore(reportCounts: Record<string, number>): TrustScore {
-  const safe = reportCounts.safe || 0;
-  const scam = reportCounts.scam || 0;
-  const fake = reportCounts.fake || 0;
-  const spam = reportCounts.spam || 0;
-  const total = safe + scam + fake + spam;
-  if (total === 0) return { score: -1, label: "Unrated", totalReports: 0 };
-  if (total === 1) {
-    if (safe === 1) return { score: 60, label: "Likely Safe", totalReports: 1 };
-    return { score: 40, label: "Uncertain", totalReports: 1 };
-  }
-  const safeRatio = safe / total;
-  const confidence = Math.min(total / 10, 1);
+/**
+ * Weighted Trust Algorithm.
+ *
+ * Raw counts are used for the "total reports" display.
+ * When weighted counts are available (stored per report), those drive the
+ * actual safe-ratio so that reports from verified / long-standing accounts
+ * carry more influence, protecting against review bombing by new accounts.
+ *
+ * Weights are assigned at report-submission time:
+ *   Anonymous             → 0.5
+ *   Authenticated         → 1.0
+ *   + email verified      → +0.3
+ *   + account age ≥ 30d   → +0.2
+ *   + account age ≥ 90d   → +0.3 (cumulative)
+ *   Max                   → 1.8
+ */
+export function calculateTrustScore(
+  reportCounts: Record<string, number>,
+  weightedCounts?: Record<string, number>
+): TrustScore {
+  const rawSafe  = reportCounts.safe  || 0;
+  const rawScam  = reportCounts.scam  || 0;
+  const rawFake  = reportCounts.fake  || 0;
+  const rawSpam  = reportCounts.spam  || 0;
+  const rawTotal = rawSafe + rawScam + rawFake + rawSpam;
+
+  if (rawTotal === 0) return { score: -1, label: "Unrated", totalReports: 0 };
+
+  const useWeighted = weightedCounts && Object.keys(weightedCounts).length > 0;
+  const wSafe  = useWeighted ? (weightedCounts!.safe  || 0) : rawSafe;
+  const wScam  = useWeighted ? (weightedCounts!.scam  || 0) : rawScam;
+  const wFake  = useWeighted ? (weightedCounts!.fake  || 0) : rawFake;
+  const wSpam  = useWeighted ? (weightedCounts!.spam  || 0) : rawSpam;
+  const wTotal = wSafe + wScam + wFake + wSpam;
+
+  if (wTotal === 0) return { score: -1, label: "Unrated", totalReports: rawTotal };
+
+  const safeRatio = wSafe / wTotal;
+  // Confidence grows toward 1.0 as real report count reaches 10
+  const confidence = Math.min(rawTotal / 10, 1);
   let score = safeRatio * 100;
   score = 50 + (score - 50) * confidence;
+
   let label = "Dangerous";
   if (score >= 75) label = "Trusted";
   else if (score >= 55) label = "Likely Safe";
   else if (score >= 40) label = "Uncertain";
   else if (score >= 25) label = "Suspicious";
-  return { score: Math.round(score), label, totalReports: total };
+  return { score: Math.round(score), label, totalReports: rawTotal };
+}
+
+async function calculateReporterWeight(userId: string | null, emailVerified: boolean): Promise<number> {
+  if (!userId) return 0.5;
+  let weight = 1.0;
+  if (emailVerified) weight += 0.3;
+  try {
+    const snap = await getDoc(doc(firestore, "users", userId));
+    if (snap.exists()) {
+      const createdAt = snap.data().createdAt;
+      if (createdAt) {
+        const d = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
+        const ageDays = (Date.now() - d.getTime()) / 86400000;
+        if (ageDays >= 90) weight += 0.3;
+        else if (ageDays >= 30) weight += 0.2;
+      }
+    }
+  } catch {}
+  return Math.min(weight, 1.8);
 }
 
 function tsToString(ts: any): string {

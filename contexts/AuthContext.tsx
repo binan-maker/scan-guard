@@ -36,6 +36,7 @@ interface AuthContextValue {
   signInWithGoogle: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   resendVerification: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   googleRequest: ReturnType<typeof Google.useAuthRequest>[0];
 }
 
@@ -232,6 +233,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function refreshUser() {
+    const fbUser = firebaseAuth.currentUser;
+    if (!fbUser) return;
+    try {
+      await fbUser.reload();
+      const reloaded = firebaseAuth.currentUser;
+      if (reloaded) {
+        setUser(toAuthUser(reloaded));
+        // Also sync updated displayName/photoURL to Firestore
+        try {
+          const { doc, updateDoc } = await import("firebase/firestore");
+          const { firestore } = await import("@/lib/firebase");
+          await updateDoc(doc(firestore, "users", reloaded.uid), {
+            displayName: reloaded.displayName || "",
+            photoURL: reloaded.photoURL || null,
+          });
+        } catch {}
+      }
+    } catch {}
+  }
+
   const value = useMemo(
     () => ({
       user,
@@ -243,6 +265,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithGoogle,
       sendPasswordReset,
       resendVerification,
+      refreshUser,
       googleRequest,
     }),
     [user, token, isLoading, googleRequest]
