@@ -1,6 +1,0 @@
-[1G[0K⠙[1G[0K
-> expo-app@1.0.0 expo:dev
-> EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN EXPO_PUBLIC_DOMAIN=$REPLIT_DEV_DOMAIN:5000 ./node_modules/.bin/expo start --localhost
-
-[1G[0K⠙[1G[0Ksh: 1: ./node_modules/.bin/expo: not found
-[1G[0K⠙[1G[0K
