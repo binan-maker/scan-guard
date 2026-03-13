@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { initializeAuth, getAuth, getReactNativePersistence } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore, getFirestore } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
 import { Platform } from "react-native";
 
@@ -37,8 +37,18 @@ function buildAuth() {
   }
 }
 
+function buildFirestore() {
+  try {
+    return initializeFirestore(firebaseApp, {
+      experimentalAutoDetectLongPolling: true,
+    });
+  } catch {
+    return getFirestore(firebaseApp);
+  }
+}
+
 export const firebaseAuth = buildAuth();
-export const firestore = getFirestore(firebaseApp);
+export const firestore = buildFirestore();
 export const realtimeDB = getDatabase(firebaseApp);
 
 import { getStorage } from "firebase/storage";

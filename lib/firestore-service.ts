@@ -264,8 +264,8 @@ export async function getOrCreateQrCode(content: string): Promise<QrCodeData> {
       scanCount: 0,
       commentCount: 0,
     });
-  } catch {
-    // Degrade gracefully when Firestore rules deny access or network is unavailable
+  } catch (e) {
+    console.warn("[firestore] getOrCreateQrCode failed:", e);
   }
   return fallback;
 }
@@ -283,7 +283,8 @@ export async function getQrCodeById(qrId: string): Promise<QrCodeData | null> {
       scanCount: d.scanCount || 0,
       commentCount: d.commentCount || 0,
     };
-  } catch {
+  } catch (e) {
+    console.warn("[firestore] getQrCodeById failed:", e);
     return null;
   }
 }
@@ -381,7 +382,9 @@ export async function getCommentUserLikes(
         if (snap.exists()) {
           result[commentId] = snap.data().isLike ? "like" : "dislike";
         }
-      } catch {}
+      } catch (e) {
+        console.warn("[firestore] getCommentUserLikes failed for comment", commentId, e);
+      }
     })
   );
   return result;
@@ -396,7 +399,9 @@ export async function recordScan(
 ): Promise<void> {
   try {
     await updateDoc(doc(firestore, "qrCodes", qrId), { scanCount: increment(1) });
-  } catch {}
+  } catch (e) {
+    console.warn("[firestore] recordScan: failed to increment scanCount:", e);
+  }
   if (userId && !isAnonymous) {
     try {
       await addDoc(collection(firestore, "users", userId, "scans"), {
@@ -406,7 +411,9 @@ export async function recordScan(
         isAnonymous: false,
         scannedAt: serverTimestamp(),
       });
-    } catch {}
+    } catch (e) {
+      console.warn("[firestore] recordScan: failed to save scan history:", e);
+    }
   }
 }
 
@@ -622,7 +629,9 @@ export async function addComment(
   });
   try {
     await updateDoc(doc(firestore, "qrCodes", qrId), { commentCount: increment(1) });
-  } catch {}
+  } catch (e) {
+    console.warn("[firestore] addComment: failed to increment commentCount:", e);
+  }
   try {
     await setDoc(doc(firestore, "users", userId, "comments", docRef.id), {
       commentId: docRef.id,
@@ -630,7 +639,9 @@ export async function addComment(
       text,
       createdAt: serverTimestamp(),
     });
-  } catch {}
+  } catch (e) {
+    console.warn("[firestore] addComment: failed to sync user comment record:", e);
+  }
   // Notify followers that a new comment was added
   notifyQrFollowers(
     qrId,
