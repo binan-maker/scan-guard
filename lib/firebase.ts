@@ -40,3 +40,6 @@ function buildAuth() {
 export const firebaseAuth = buildAuth();
 export const firestore = getFirestore(firebaseApp);
 export const realtimeDB = getDatabase(firebaseApp);
+
+import { getStorage } from "firebase/storage";
+export const storage = getStorage(firebaseApp);

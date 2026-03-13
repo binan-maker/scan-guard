@@ -773,3 +773,61 @@ export async function clearAllNotifications(userId: string): Promise<void> {
     await dbRemove(dbRef(realtimeDB, `notifications/${userId}/items`));
   } catch {}
 }
+
+export interface UserStats {
+  followingCount: number;
+  scanCount: number;
+  commentCount: number;
+  totalLikesReceived: number;
+}
+
+export async function getUserStats(userId: string): Promise<UserStats> {
+  try {
+    const [followingSnap, scansSnap, commentsSnap, userDoc] = await Promise.all([
+      getDocs(collection(firestore, "users", userId, "following")),
+      getDocs(collection(firestore, "users", userId, "scans")),
+      getDocs(collection(firestore, "users", userId, "comments")),
+      getDoc(doc(firestore, "users", userId)),
+    ]);
+    return {
+      followingCount: followingSnap.size,
+      scanCount: scansSnap.size,
+      commentCount: commentsSnap.size,
+      totalLikesReceived: userDoc.exists() ? (userDoc.data().totalLikesReceived || 0) : 0,
+    };
+  } catch {
+    return { followingCount: 0, scanCount: 0, commentCount: 0, totalLikesReceived: 0 };
+  }
+}
+
+export async function updateUserPhotoURL(userId: string, photoURL: string): Promise<void> {
+  try {
+    await updateDoc(doc(firestore, "users", userId), { photoURL });
+  } catch {}
+}
+
+export async function getUserPhotoURL(userId: string): Promise<string | null> {
+  try {
+    const snap = await getDoc(doc(firestore, "users", userId));
+    if (snap.exists()) return snap.data().photoURL || null;
+  } catch {}
+  return null;
+}
+
+export async function saveGeneratedQr(
+  userId: string,
+  content: string,
+  contentType: string,
+  uuid: string,
+  branded: boolean
+): Promise<void> {
+  try {
+    await addDoc(collection(firestore, "users", userId, "generatedQrs"), {
+      content,
+      contentType,
+      uuid,
+      branded,
+      createdAt: serverTimestamp(),
+    });
+  } catch {}
+}
